@@ -177,9 +177,9 @@ SecretsCLI is open-source software licensed under the [MIT License](LICENSE).
 
 - **Documentation**: [docs/](docs/)
 - **API Documentation**: [API documentation](secrets-api-orpin.vercel.app)
-- **GitHub**: [https://github.com/yourusername/secretscli](https://github.com/The-17/secretscli)
+- **GitHub**: [https://github.com/The-17/secretscli](https://github.com/The-17/secretscli)
 - **PyPI**: [https://pypi.org/project/secretscli/](https://pypi.org/project/secretscli/)
-- **Issues**: [https://github.com/yourusername/secretscli/issues](https://github.com/The-17/secretscli/issues)
+- **Issues**: [https://github.com/The-17/secretscli/issues](https://github.com/The-17/secretscli/issues)
 
 ## Support
 
