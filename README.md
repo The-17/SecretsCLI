@@ -6,7 +6,7 @@ SecretsCLI is a command-line tool that makes managing environment variables and 
 [![PyPI version](https://badge.fury.io/py/secretscli.svg)](https://badge.fury.io/py/secretscli)
 [![Python Version](https://img.shields.io/pypi/pyversions/secretscli.svg)](https://pypi.org/project/secretscli/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://github.com/yourusername/secretscli/tree/main/docs)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://github.com/The-17/secretscli/tree/main/docs)
 
 ## Why SecretsCLI?
 
@@ -177,15 +177,15 @@ SecretsCLI is open-source software licensed under the [MIT License](LICENSE).
 
 - **Documentation**: [docs/](docs/)
 - **API Documentation**: [API documentation](secrets-api-orpin.vercel.app)
-- **GitHub**: [https://github.com/yourusername/secretscli](https://github.com/yourusername/secretscli)
+- **GitHub**: [https://github.com/yourusername/secretscli](https://github.com/The-17/secretscli)
 - **PyPI**: [https://pypi.org/project/secretscli/](https://pypi.org/project/secretscli/)
-- **Issues**: [https://github.com/yourusername/secretscli/issues](https://github.com/yourusername/secretscli/issues)
+- **Issues**: [https://github.com/yourusername/secretscli/issues](https://github.com/The-17/secretscli/issues)
 
 ## Support
 
 - [Documentation](docs/)
-- [Report a Bug](https://github.com/yourusername/secretscli/issues)
-- [Request a Feature](https://github.com/yourusername/secretscli/issues)
+- [Report a Bug](https://github.com/The-17/secretscli/issues)
+- [Request a Feature](https://github.com/The-17/secretscli/issues)
 
 ## Show Your Support
 
