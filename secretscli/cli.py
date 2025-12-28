@@ -6,12 +6,12 @@ from rich.panel import Panel
 
 from .config import initialize_global_config, initialize_project_config
 from .prompts import Form, custom_style
-from .auth import Auth
+from .auth import Auth, _perform_login_
 from .encryption import EncryptionService
-from .utils.credentials import CredentialsManager
 
 
 app = typer.Typer(name="SecretsCLI", help="SecretsCLI — secure secrets from any device.", add_completion=True, rich_markup_mode="rich")
+
 
 @app.command()
 def init():
@@ -66,24 +66,9 @@ def init():
         
         # Auto-login after signup to get tokens
         rich.print("[green]Account created! Logging you in...[/green]")
-        login_result = Auth.login({
-            "email": credentials["email"],
-            "password": credentials["password"]
-        })
-        
-        if login_result is None:
+        if not _perform_login_({"email": credentials["email"], "password": credentials["password"]}, master_key):
             rich.print("[red]Auto-login failed. Please run 'secretscli login' manually.[/red]")
             raise typer.Exit(1)
-        data = login_result.get("data", {})
-        
-        # Store all credentials
-        CredentialsManager.set_email(credentials["email"])
-        CredentialsManager.store_master_key(credentials["email"], master_key)
-        CredentialsManager.store_tokens(
-            access_token=login_result.get("access_token", data.get("access")),
-            refresh_token=login_result.get("refresh_token", data.get("refresh")),
-            expires_at=login_result.get("expires_at", "")
-        )
         
         rich.print("[green]✅ You're all set! Run 'secretscli project create <name>' to get started.[/green]")
 
@@ -93,36 +78,27 @@ def init():
             rich.print("Cancelled by user")
             raise typer.Exit(0)
 
-        login_result = Auth.login(credentials)
-        
-        if login_result is None:
-            rich.print("[red]Login failed. Please check your credentials.[/red]")
+        if not _perform_login_(credentials):
             raise typer.Exit(1)
-
-        data = login_result.get("data", {})
-        
-        encrypted_master_key = data.get("encrypted_master_key")
-        salt = data.get("key_salt")
-        
-        if not encrypted_master_key or not salt:
-            rich.print("[red]Login failed: Could not retrieve encryption keys from server.[/red]")
-            raise typer.Exit(1)
-        
-        try:
-            master_key = EncryptionService.decrypt_master_key(encrypted_master_key, credentials["password"], salt)
-        except Exception as e:
-            rich.print("[red]Login failed: Could not decrypt master key. Please try again.[/red]")
-            raise typer.Exit(1)
-
-        CredentialsManager.set_email(credentials["email"])
-        CredentialsManager.store_master_key(credentials["email"], master_key)
-        CredentialsManager.store_tokens(
-            access_token=login_result.get("access_token", data.get("access")),
-            refresh_token=login_result.get("refresh_token", data.get("refresh")),
-            expires_at=login_result.get("expires_at", "")
-        )
         
         rich.print("[green]✅ Logged in successfully![/green]")
+
+
+@app.command()
+def login():
+    """
+    Login to your SecretsCLI account.
+    Use this if you already have an account and need to authenticate on this device.
+    """
+    credentials = Form.login_form()
+    if credentials is None:
+        rich.print("Cancelled by user")
+        raise typer.Exit(0)
+
+    if not _perform_login_(credentials):
+        raise typer.Exit(1)
+    
+    rich.print("[green]✅ Logged in successfully![/green]")
 
 
 @app.command()
