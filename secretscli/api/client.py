@@ -20,7 +20,9 @@ ENDPOINT_MAP = {
     "projects": {
         "list": "projects/",
         "create": "projects/",
-        "get": "projects/{project_id}/",
+        "get": "projects/{project_name}/",
+        "update": "projects/{project_name}/",
+        "delete": "projects/{project_name}/",
     }
 }
 

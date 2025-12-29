@@ -19,7 +19,9 @@ app.add_typer(secrets_app, name="secrets")
 
 
 @app.command()
-def init():
+def init(
+    force: bool = typer.Option(False, "--force", "-f", help="Skip reinitialize confirmation")
+):
     """
     Initialize SecretsCLI for your account and local environment.
     This sets up the configuration directory and prompts you to create a new account or connect an existing one.
@@ -30,8 +32,8 @@ def init():
     if not global_created and not project_created:
         typer.echo("SecretsCLI is already initialized.")
         
-        if questionary.confirm("Do you want to reinitialize?", default=False, style=custom_style).ask():
-            # Only reinitialize if they said YES
+        if force or questionary.confirm("Do you want to reinitialize?", default=False, style=custom_style).ask():
+            # Reinitialize
             initialize_global_config(re_init=True)
             initialize_project_config(re_init=True)
             typer.echo("SecretsCLI reinitialized successfully!\n")

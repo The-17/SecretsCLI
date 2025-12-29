@@ -14,7 +14,7 @@ import typer
 import rich
 
 
-secrets_app = typer.Typer(name="secrets", help="Manage your secrets")
+secrets_app = typer.Typer(name="secrets", help="Manage your secrets. Run 'secretscli secrets --help' for subcommands.")
 
 
 # TODO: Implement commands
