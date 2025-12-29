@@ -42,6 +42,7 @@ TOKEN_SCHEMA = {
 PROJECT_SCHEMA = {
     "project_id": None,         # UUID of the linked project
     "project_name": None,       # Project name
+    "description": None,        # Optional project description
     "environment": "development",  # Environment: development, staging, production
     "last_pull": None,          # ISO timestamp of last pull
     "last_push": None,          # ISO timestamp of last push

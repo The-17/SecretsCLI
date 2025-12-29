@@ -237,7 +237,7 @@ class CredentialsManager:
     # Project Config Management (file-based: ./.secretscli/project.json)
 
     @staticmethod
-    def config_project(project_id: str, project_name: str, environment: str = "development", last_pull: str = None, last_push: str = None) -> bool | None:
+    def config_project(project_id: str, project_name: str, description: str = None, environment: str = "development", last_pull: str = None, last_push: str = None) -> bool | None:
         """
         Configure the current directory's project binding.
         
@@ -246,6 +246,7 @@ class CredentialsManager:
         Args:
             project_id: UUID of the project
             project_name: Human-readable project name
+            description: Optional project description
             environment: One of "development", "staging", "production"
             last_pull: ISO timestamp of last pull (optional)
             last_push: ISO timestamp of last push (optional)
@@ -257,6 +258,7 @@ class CredentialsManager:
             CredentialsManager.config_project(
                 "123e4567-e89b-12d3-a456-426614174000",
                 "my-web-app",
+                "My awesome project",
                 "production"
             )
         """
@@ -269,6 +271,7 @@ class CredentialsManager:
         configs = {
             "project_id": project_id,
             "project_name": project_name,
+            "description": description,
             "environment": environment,
             "last_pull": last_pull,
             "last_push": last_push

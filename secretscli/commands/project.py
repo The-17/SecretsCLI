@@ -19,7 +19,10 @@ project_app = typer.Typer(name="project", help="Manage your projects")
 
 
 @project_app.command("create")
-def create(project_name: str):
+def create(
+    project_name: str = typer.Argument(..., help="Name for the new project"),
+    description: str = typer.Option(None, "--description", "-d", help="Optional project description")
+    ):
     """
     Create a new project and bind it to the current directory.
     """
@@ -27,7 +30,12 @@ def create(project_name: str):
         rich.print("[red]Project name is required.[/red]")
         raise typer.Exit(1)
     
-    response = api_client.call("projects.create", "POST", {"name": project_name})
+    # Build request data
+    data = {"name": project_name}
+    if description:
+        data["description"] = description
+    
+    response = api_client.call("projects.create", "POST", data)
     if response.status_code != 201:
         rich.print(f"[red]Failed to create project: {response.text}[/red]")
         raise typer.Exit(1)
@@ -40,12 +48,14 @@ def create(project_name: str):
     CredentialsManager.config_project(
         project_id=project_id,
         project_name=project_name,
-        environment="development",  # Default environment
+        description=description,
+        environment="development",
         last_pull=None,
         last_push=None
     )
     
     rich.print(f"[green]✅ Project '{project_name}' created and linked to this directory![/green]")
+
 
 
 # TODO: Implement commands

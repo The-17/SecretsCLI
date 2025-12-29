@@ -1,6 +1,7 @@
 {
-  "project_id": "b8924580-f4d7-4978-9476-2b692ac618c5",
-  "project_name": "secrets",
+  "project_id": "3638a575-1113-4476-a80e-bd7da3092ef5",
+  "project_name": "sedt",
+  "description": "test description",
   "environment": "development",
   "last_pull": null,
   "last_push": null
