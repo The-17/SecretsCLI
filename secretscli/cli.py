@@ -8,9 +8,14 @@ from .config import initialize_global_config, initialize_project_config
 from .prompts import Form, custom_style
 from .auth import Auth, _perform_login_
 from .encryption import EncryptionService
+from .commands import project_app, secrets_app
 
 
 app = typer.Typer(name="SecretsCLI", help="SecretsCLI — secure secrets from any device.", add_completion=True, rich_markup_mode="rich")
+
+# Register subcommand groups
+app.add_typer(project_app, name="project")
+app.add_typer(secrets_app, name="secrets")
 
 
 @app.command()
@@ -99,6 +104,7 @@ def login():
         raise typer.Exit(1)
     
     rich.print("[green]✅ Logged in successfully![/green]")
+
 
 
 @app.command()

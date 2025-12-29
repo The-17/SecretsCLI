@@ -1,6 +1,6 @@
 {
-  "project_id": null,
-  "project_name": null,
+  "project_id": "b8924580-f4d7-4978-9476-2b692ac618c5",
+  "project_name": "secrets",
   "environment": "development",
   "last_pull": null,
   "last_push": null
