@@ -5,6 +5,7 @@ Commands for managing projects:
 - create: Create a new project
 - list: List all projects
 - use: Set active project for current directory
+- update: Update a project
 - delete: Delete a project
 """
 

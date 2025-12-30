@@ -105,6 +105,41 @@ class EncryptionService:
 
         encrypted_master_key = EncryptionService.encrypt_master_key(master_key, password, salt)
         return master_key, encrypted_master_key, salt
+
+    @staticmethod
+    def encrypt_secret(secret: str, master_key: bytes) -> str:
+        """
+        Encrypt a secret using the master key.
+        
+        Args:
+            secret: Secret string to encrypt
+            master_key: Master key bytes
+            
+        Returns:
+            Encrypted secret as a string (safe for storage)
+        """
+        cipher = Fernet(master_key)
+        encrypted = cipher.encrypt(secret.encode())
+        logger.debug("Secret encrypted successfully")
+        return encrypted.decode()
+
+    @staticmethod
+    def decrypt_secret(encrypted_secret: str, master_key: bytes) -> str:
+        """
+        Decrypt a secret using the master key.
+        
+        Args:
+            encrypted_secret: Encrypted secret string
+            master_key: Master key bytes
+            
+        Returns:
+            Decrypted secret as a string
+        """
+        cipher = Fernet(master_key)
+        decrypted = cipher.decrypt(encrypted_secret.encode())
+        logger.debug("Secret decrypted successfully")
+        return decrypted.decode()
+
         
 
 

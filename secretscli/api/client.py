@@ -11,11 +11,11 @@ ENDPOINT_MAP = {
         "refresh": "auth/refresh/",
     },
     "secrets": {
-        "list": "secrets/",
+        "list": "secrets/{project_id}/",
         "create": "secrets/",
-        "get": "secrets/{secret_id}/",
-        "update": "secrets/{secret_id}/",
-        "delete": "secrets/{secret_id}/",
+        "get": "secrets/{project_id}/{key}/",
+        "update": "secrets/{project_id}/{key}/",
+        "delete": "secrets/{project_id}/{key}/",
     },
     "projects": {
         "list": "projects/",

@@ -2,6 +2,7 @@
 from pathlib import Path
 import json, os, sys
 
+
 def _create_json_file_(file_path: Path, data: json, secure: bool) -> bool:
 
     """
@@ -36,5 +37,3 @@ def _create_json_file_(file_path: Path, data: json, secure: bool) -> bool:
     except OSError as e:
         print(f"Error: Failed to create {file_path}: {e}", file=sys.stderr)
         sys.exit(1)
-
-
