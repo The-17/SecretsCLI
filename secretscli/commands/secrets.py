@@ -56,7 +56,7 @@ def set_secret(
     
     for secret in secrets:
         if "=" not in secret:
-            rich.print("[red]Invalid format: '{secret}'. Use KEY=VALUE format.[/red]")
+            rich.print(f"[red]Invalid format: '{secret}'. Use KEY=VALUE format.[/red]")
             raise typer.Exit(1)
         
         key, value = secret.split("=", 1)
@@ -120,7 +120,7 @@ def get_secret(
     )
     
     if response.status_code != 200:
-        rich.print(f"[red]Failed to get secret: {response}[/red]")
+        rich.print(f"[red]Failed to get secret: {response.text}[/red]")
         raise typer.Exit(1)
     
     rich.print(f"[green]Successfully retrieved {key}[/green]")
@@ -154,7 +154,7 @@ def list_secrets(
     )
     
     if response.status_code != 200:
-        rich.print(f"[red]Failed to list secrets: {response}[/red]")
+        rich.print(f"[red]Failed to list secrets: {response.text}[/red]")
         raise typer.Exit(1)
     
     rich.print(f"[green]Successfully listed secrets[/green]")
@@ -170,10 +170,46 @@ def list_secrets(
             rich.print(f"{secret['key']}={decrypted_secret}")
         else:
             rich.print(secret["key"])
+
+@secrets_app.command("pull")
+def pull_secrets():
+    """
+    Download secrets to .env file.
+    """
+    if not CredentialsManager.is_authenticated():
+        rich.print("[red]You are not logged in. Please log in first.[/red]")
+        raise typer.Exit(1)
+    
+    project_id = CredentialsManager.get_project_id()
+    
+    response = api_client.call(
+        "secrets.list",
+        "GET",
+        project_id=project_id,
+        authenticated=True
+    )
+    
+    if response.status_code != 200:
+        rich.print(f"[red]Failed to pull secrets: {response.text}[/red]")
+        raise typer.Exit(1)
+    
+    rich.print(f"[green]Successfully pulled secrets[/green]")
+    secrets = response.json()["data"]["secrets"]
+    secrets_dict = {}
+
+    email = CredentialsManager.get_email()
+    master_key = CredentialsManager.get_master_key(email)
+    
+    for secret in secrets:
+        decrypted_secret = EncryptionService.decrypt_secret(secret["value"], master_key)
+        secrets_dict[secret["key"]] = decrypted_secret
+    
+    env.write(secrets_dict)
+    rich.print(f"[green]Successfully pulled secrets to .env file[/green]")
+
     
 
 # TODO: Implement commands
 # @secrets_app.command("delete")
-# @secrets_app.command("pull")
 # @secrets_app.command("push")
 
