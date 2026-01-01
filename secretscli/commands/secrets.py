@@ -249,7 +249,33 @@ def push_secrets():
     rich.print(f"[green]Successfully pushed .env secrets[/green]")
     
 
-# TODO: Implement commands
-# @secrets_app.command("delete")
-# @secrets_app.command("push")
-
+@secrets_app.command("delete")
+def delete_secret(
+    key: str = typer.Argument(..., help="The key of the secret to delete")
+):
+    """
+    Delete a secret from API and local .env file.
+    """
+    if not CredentialsManager.is_authenticated():
+        rich.print("[red]You are not logged in. Please log in first.[/red]")
+        raise typer.Exit(1)
+    
+    project_id = CredentialsManager.get_project_id()
+    
+    # Delete from API first
+    response = api_client.call(
+        "secrets.delete",
+        "DELETE",
+        project_id=project_id,
+        key=key,
+        authenticated=True
+    )
+    
+    if response.status_code != 200:
+        rich.print(f"[red]Failed to delete secret: {response.text}[/red]")
+        raise typer.Exit(1)
+    
+    # Only delete locally if API succeeded
+    env.delete(key)
+    
+    rich.print(f"[green]Successfully deleted {key}[/green]")
