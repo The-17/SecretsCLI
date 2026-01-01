@@ -207,6 +207,46 @@ def pull_secrets():
     env.write(secrets_dict)
     rich.print(f"[green]Successfully pulled secrets to .env file[/green]")
 
+
+@secrets_app.command("push")
+def push_secrets():
+    """
+    Upload secrets from .env file to API.
+    """
+    if not CredentialsManager.is_authenticated():
+        rich.print("[red]You are not logged in. Please log in first.[/red]")
+        raise typer.Exit(1)
+
+    secrets = env.read()
+    api_secrets = []
+    
+    email = CredentialsManager.get_email()
+    master_key = CredentialsManager.get_master_key(email)
+
+    for key, value in secrets.items():
+        encrypted_secret = EncryptionService.encrypt_secret(value, master_key)
+        api_secrets.append({"key": key, "value": encrypted_secret})
+
+
+    project_id = CredentialsManager.get_project_id()
+
+    data = {
+        "project_id": project_id,
+        "secrets": api_secrets
+    }
+    
+    response = api_client.call(
+        "secrets.create",
+        "POST",
+        data=data,
+        authenticated=True  
+    )
+    
+    if response.status_code != 201:
+        rich.print(f"[red]Failed to push secrets: {response.text}[/red]")
+        raise typer.Exit(1)
+
+    rich.print(f"[green]Successfully pushed .env secrets[/green]")
     
 
 # TODO: Implement commands
