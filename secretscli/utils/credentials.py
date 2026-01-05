@@ -23,7 +23,7 @@ Usage:
 """
 
 import json
-import sys
+import sys, base64
 from pathlib import Path
 
 import keyring
@@ -188,79 +188,36 @@ class CredentialsManager:
         config = json.loads(global_config_file.read_text())
         return config.get("email")
 
-    # Master Key Management (OS keychain via keyring)
-
-    @staticmethod
-    def store_master_key(email: str, master_key: bytes) -> bool:
-        """
-        Store the decrypted master key in OS keychain.
-        
-        The master key is used to encrypt/decrypt secrets. It's stored
-        in the OS keychain (macOS Keychain, Windows Credential Manager,
-        or Linux Secret Service) for security.
-        
-        Args:
-            email: User's email (used as keychain identifier)
-            master_key: Decrypted master key bytes
-            
-        Returns:
-            True on success
-            
-        Note:
-            Call this immediately after login while you still have
-            the user's password to decrypt the master key.
-        """
-        keyring.set_password(KEYRING_SERVICE, email, master_key.decode())
-        return True
-
-    @staticmethod
-    def get_master_key(email: str = None) -> bytes | None:
-        """
-        Retrieve the master key from OS keychain.
-        
-        Args:
-            email: User's email (optional, will use stored email if not provided)
-            
-        Returns:
-            Master key bytes, or None if not found
-            
-        Example:
-            key = CredentialsManager.get_master_key()
-            decrypted = Fernet(key).decrypt(encrypted_secret)
-        """
-        email = email or CredentialsManager.get_email()
-        if not email:
-            return None
-        key = keyring.get_password(KEYRING_SERVICE, email)
-        return key.encode() if key else None
-
     # Project Config Management (file-based: ./.secretscli/project.json)
 
     @staticmethod
-    def config_project(project_id: str, project_name: str, description: str = None, environment: str = "development", last_pull: str = None, last_push: str = None) -> bool | None:
+    def config_project(
+        project_id: str, 
+        project_name: str, 
+        description: str = None, 
+        environment: str = "development",
+        workspace_id: str = None,
+        workspace_name: str = None,
+        workspace_key: str = None,
+        last_pull: str = None, 
+        last_push: str = None
+    ) -> bool | None:
         """
         Configure the current directory's project binding.
-        
-        Links the current working directory to a SecretsCLI project.
         
         Args:
             project_id: UUID of the project
             project_name: Human-readable project name
             description: Optional project description
             environment: One of "development", "staging", "production"
+            workspace_id: UUID of the workspace this project belongs to
+            workspace_name: Workspace display name
+            workspace_key: Base64-encoded workspace encryption key
             last_pull: ISO timestamp of last pull (optional)
             last_push: ISO timestamp of last push (optional)
             
         Returns:
             True on success, None if project.json doesn't exist
-            
-        Example:
-            CredentialsManager.config_project(
-                "123e4567-e89b-12d3-a456-426614174000",
-                "my-web-app",
-                "My awesome project",
-                "production"
-            )
         """
         project_config_dir = Path.cwd() / ".secretscli"
         project_file = project_config_dir / "project.json"
@@ -273,6 +230,9 @@ class CredentialsManager:
             "project_name": project_name,
             "description": description,
             "environment": environment,
+            "workspace_id": workspace_id,
+            "workspace_name": workspace_name,
+            "workspace_key": workspace_key,
             "last_pull": last_pull,
             "last_push": last_push
         }
@@ -281,14 +241,29 @@ class CredentialsManager:
         return True
 
     @staticmethod
-    def get_project_config() -> dict | None:
+    def update_project_config(**kwargs) -> bool:
         """
-        Get the full project configuration for current directory.
+        Update specific fields in project config without overwriting others.
         
+        Args:
+            **kwargs: Fields to update (e.g., last_pull="2024-01-01T...")
+            
         Returns:
-            Dict with project_id, project_name, environment, last_pull, last_push,
-            or None if not in a SecretsCLI project directory
+            True on success, False if not in a project directory
         """
+        config = CredentialsManager.get_project_config()
+        if not config:
+            return False
+        
+        config.update(kwargs)
+        
+        project_file = Path.cwd() / ".secretscli" / "project.json"
+        project_file.write_text(json.dumps(config, indent=2))
+        return True
+
+    @staticmethod
+    def get_project_config() -> dict | None:
+        """Get the full project configuration for current directory."""
         project_config_dir = Path.cwd() / ".secretscli"
         project_file = project_config_dir / "project.json"
 
@@ -299,14 +274,34 @@ class CredentialsManager:
 
     @staticmethod
     def get_project_id() -> str | None:
-        """
-        Get just the project ID for the current directory.
-        
-        Returns:
-            Project UUID string, or None if not in a project directory
-        """
+        """Get just the project ID for the current directory."""
         config = CredentialsManager.get_project_config()
         return config.get("project_id") if config else None
+
+    @staticmethod
+    def get_project_name() -> str | None:
+        """Get the project name for the current directory."""
+        config = CredentialsManager.get_project_config()
+        return config.get("project_name") if config else None
+
+    @staticmethod
+    def get_project_workspace_key() -> bytes | None:
+        """
+        Get the workspace key for the current project directory.
+        
+        Returns:
+            32-byte workspace key, or None if not set
+        """
+        config = CredentialsManager.get_project_config()
+        if not config or not config.get("workspace_key"):
+            return None
+        return base64.b64decode(config["workspace_key"])
+
+    @staticmethod
+    def get_project_workspace_id() -> str | None:
+        """Get the workspace ID for the current project directory."""
+        config = CredentialsManager.get_project_config()
+        return config.get("workspace_id") if config else None
 
     # Session Management
 
@@ -347,7 +342,7 @@ class CredentialsManager:
         Check if user has a valid session.
         
         Returns:
-            True if both access token and master key are available
+            True if both access token and private key are available
             
         Note:
             This doesn't validate token expiry - just checks presence.
@@ -356,5 +351,117 @@ class CredentialsManager:
         email = CredentialsManager.get_email()
         return (
             CredentialsManager.get_access_token() is not None
-            and CredentialsManager.get_master_key(email) is not None
+            and CredentialsManager.get_private_key(email) is not None
         )
+
+    # KEY PAIR MANAGEMENT (OS Keychain)
+
+    @staticmethod
+    def store_keypair(email: str, private_key: bytes, public_key: bytes) -> bool:
+        """
+        Store user's keypair in OS keychain.
+        
+        Args:
+            email: User's email (used as keychain identifier)
+            private_key: 32-byte X25519 private key
+            public_key: 32-byte X25519 public key
+            
+        Returns:
+            True on success
+        """
+        keyring.set_password(KEYRING_SERVICE, f"{email}_private_key", base64.b64encode(private_key).decode())
+        keyring.set_password(KEYRING_SERVICE, f"{email}_public_key", base64.b64encode(public_key).decode())
+        return True
+
+    @staticmethod
+    def store_private_key(email: str, private_key: bytes) -> bool:
+        """Store user's private key in OS keychain (legacy, prefer store_keypair)."""
+        encoded = base64.b64encode(private_key).decode()
+        keyring.set_password(KEYRING_SERVICE, f"{email}_private_key", encoded)
+        return True
+
+    @staticmethod
+    def get_private_key(email: str = None) -> bytes | None:
+        """Retrieve user's private key from OS keychain."""
+        email = email or CredentialsManager.get_email()
+        if not email:
+            return None
+        encoded = keyring.get_password(KEYRING_SERVICE, f"{email}_private_key")
+        return base64.b64decode(encoded) if encoded else None
+
+    @staticmethod
+    def get_public_key(email: str = None) -> bytes | None:
+        """Retrieve user's public key from OS keychain."""
+        email = email or CredentialsManager.get_email()
+        if not email:
+            return None
+        encoded = keyring.get_password(KEYRING_SERVICE, f"{email}_public_key")
+        return base64.b64decode(encoded) if encoded else None
+
+    # ========================
+    # GLOBAL WORKSPACE CACHE (for fast workspace switching)
+    # ========================
+
+    @staticmethod
+    def store_workspace_keys(workspaces: dict) -> bool:
+        """
+        Store decrypted workspace keys to global config (cache).
+        
+        Args:
+            workspaces: Dict of workspace_id -> {name, key (base64), role}
+        """
+        config = CredentialsManager._load_global_config()
+        config["workspaces"] = workspaces
+        global_config_file.write_text(json.dumps(config, indent=2))
+        return True
+
+    @staticmethod
+    def get_workspace_keys() -> dict:
+        """Get all cached workspace keys."""
+        config = CredentialsManager._load_global_config()
+        return config.get("workspaces", {})
+
+    @staticmethod
+    def get_workspace_key(workspace_id: str) -> bytes | None:
+        """Get workspace key from global cache by ID."""
+        workspaces = CredentialsManager.get_workspace_keys()
+        ws = workspaces.get(workspace_id)
+        if ws and ws.get("key"):
+            return base64.b64decode(ws["key"])
+        return None
+
+    @staticmethod
+    def get_workspace(workspace_id: str) -> dict:
+        """Get workspace info from global cache. Returns empty dict if not found."""
+        workspaces = CredentialsManager.get_workspace_keys()
+        return workspaces.get(workspace_id, {})
+
+    @staticmethod
+    def get_selected_workspace_id() -> str | None:
+        """
+        Get the selected workspace for NEW project creation.
+        This is NOT the workspace of the current project - use get_project_workspace_id() for that.
+        """
+        config = CredentialsManager._load_global_config()
+        return config.get("selected_workspace_id")
+
+    @staticmethod
+    def set_selected_workspace(workspace_id: str) -> bool:
+        """
+        Set the selected workspace for NEW project creation.
+        Does NOT affect existing projects' workspace binding.
+        """
+        config = CredentialsManager._load_global_config()
+        config["selected_workspace_id"] = workspace_id
+        global_config_file.write_text(json.dumps(config, indent=2))
+        return True
+
+    @staticmethod
+    def _load_global_config() -> dict:
+        """Load global config file, return empty dict if not found."""
+        if not global_config_file.exists():
+            return {}
+        try:
+            return json.loads(global_config_file.read_text())
+        except json.JSONDecodeError:
+            return {}

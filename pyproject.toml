@@ -16,7 +16,8 @@ dependencies = [
     "cryptography (>=46.0.3,<47.0.0)",
     "keyring (>=25.7.0,<26.0.0)",
     "secretstorage (>=3.5.0,<4.0.0)",
-    "keyrings-alt (>=5.0.2,<6.0.0)"
+    "keyrings-alt (>=5.0.2,<6.0.0)",
+    "pynacl (>=1.6.2,<2.0.0)"
 ]
 
 

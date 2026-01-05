@@ -8,9 +8,9 @@ Global Config (~/.secretscli/):
 └── token.json      # Authentication tokens (restricted permissions)
 
 Project Config (./.secretscli/):
-└── project.json    # Project binding and sync info
+└── project.json    # Project binding, workspace, and sync info
 
-Note: Master key is stored in OS keychain via `keyring`, not in files.
+Note: Private key is stored in OS keychain via `keyring`, not in files.
 """
 
 from pathlib import Path
@@ -44,6 +44,9 @@ PROJECT_SCHEMA = {
     "project_name": None,       # Project name
     "description": None,        # Optional project description
     "environment": "development",  # Environment: development, staging, production
+    "workspace_id": None,       # UUID of the workspace this project belongs to
+    "workspace_name": None,     # Workspace display name
+    "workspace_key": None,      # Base64-encoded workspace encryption key
     "last_pull": None,          # ISO timestamp of last pull
     "last_push": None,          # ISO timestamp of last push
 }

@@ -1,5 +1,51 @@
-import requests
+"""
+API Client
+
+This module handles all HTTP communication with the SecretsCLI API server.
+
+ARCHITECTURE:
+------------
+- ENDPOINT_MAP: Defines all API endpoints in a structured format
+- PUBLIC_ENDPOINTS: Endpoints that don't require authentication tokens
+- APIClient: Main class for making HTTP requests
+
+ENDPOINT FORMAT:
+---------------
+Endpoints are referenced as "category.action", e.g.:
+- "auth.login" → POST /api/auth/login/
+- "secrets.get" → GET /api/secrets/{project_id}/{key}/
+- "projects.create" → POST /api/projects/
+
+URL PARAMETERS:
+--------------
+Endpoints with {placeholders} need URL parameters. Pass them as kwargs:
+    api_client.call("secrets.get", "GET", project_id="uuid", key="API_KEY")
+    # Results in: GET /api/secrets/uuid/API_KEY/
+
+AUTHENTICATION:
+--------------
+- Most endpoints auto-include the Authorization header with JWT token
+- PUBLIC_ENDPOINTS (signup, login, refresh) skip authentication
+- Override with authenticated=False if needed
+
+USAGE:
+-----
+    from secretscli.api.client import api_client
+    
+    # POST with data
+    response = api_client.call("auth.login", "POST", data={"email": "...", "password": "..."})
+    
+    # GET with URL params
+    response = api_client.call("secrets.get", "GET", project_id="uuid", key="API_KEY")
+    
+    # Check response
+    if response.status_code == 200:
+        data = response.json()
+"""
+
 from typing import Optional, Dict, Any
+import requests
+from ..utils.credentials import CredentialsManager
 
 
 # API Endpoint Configuration
@@ -23,6 +69,20 @@ ENDPOINT_MAP = {
         "get": "projects/{project_name}/",
         "update": "projects/{project_name}/",
         "delete": "projects/{project_name}/",
+        "invite": "projects/{project_name}/invite/",
+    },
+    "workspaces": {
+        "list": "workspaces/",
+        "create": "workspaces/",
+        "get": "workspaces/{workspace_id}/",
+        "update": "workspaces/{workspace_id}/",
+        "delete": "workspaces/{workspace_id}/",
+        "members": "workspaces/{workspace_id}/members/",
+        "invite": "workspaces/{workspace_id}/members/",
+        "remove_member": "workspaces/{workspace_id}/members/{email}/",
+    },
+    "users": {
+        "public_key": "users/{email}/public-key/",
     }
 }
 
@@ -68,7 +128,6 @@ class APIClient:
 
     def _get_auth_header_(self) -> dict:
         """Get authorization header with access token from stored credentials."""
-        from ..utils.credentials import CredentialsManager
         
         access_token = CredentialsManager.get_access_token()
         if access_token:

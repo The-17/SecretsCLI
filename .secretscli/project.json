@@ -1,8 +1,11 @@
 {
-  "project_id": "99d0fc2b-c1bf-4c9d-a6e2-cd33efa4ccd5",
-  "project_name": "kairos",
+  "project_id": "a924851d-1df4-48bc-8092-0afbfe098738",
+  "project_name": "test2",
   "description": null,
   "environment": "development",
+  "workspace_id": "2080814a-8711-41c0-b7fc-4c42e0567bdd",
+  "workspace_name": "test workspace",
+  "workspace_key": "YWFHSVhqZGxscUJPLW1IdFRBc0Nhb2hMaUE1Y3lBXzBxV0lOT3k3NGc5Yz0=",
   "last_pull": null,
   "last_push": null
 }

@@ -1,6 +1,44 @@
+"""
+SecretsCLI - Main Entry Point
+
+This is the main entry point for the SecretsCLI application.
+It defines the Typer application and registers all commands.
+
+STRUCTURE:
+---------
+- Top-level commands (init, login, guide) are defined here
+- Subcommand groups (project, secrets) are imported from commands/
+
+HOW TYPER WORKS:
+---------------
+Typer is a CLI framework built on Click. Commands are defined as functions
+decorated with @app.command(). Subcommand groups use app.add_typer().
+
+Example:
+    @app.command()
+    def my_command():
+        '''This docstring appears in --help'''
+        pass
+
+TO ADD A NEW TOP-LEVEL COMMAND:
+------------------------------
+1. Define your function with @app.command() decorator
+2. Use typer.Argument() for required positional args
+3. Use typer.Option() for optional flags
+4. The function docstring becomes the help text
+
+COMMANDS DEFINED HERE:
+---------------------
+- init: Initialize SecretsCLI (create account or login)
+- login: Login to existing account
+- guide: Show interactive quick-start guide
+"""
+
 import typer
 import rich
 import questionary
+import base64
+
 from rich.console import Console
 from rich.panel import Panel
 
@@ -8,7 +46,7 @@ from .config import initialize_global_config, initialize_project_config
 from .prompts import Form, custom_style
 from .auth import Auth, _perform_login_
 from .encryption import EncryptionService
-from .commands import project_app, secrets_app
+from .commands import project_app, secrets_app, workspace_app
 
 
 app = typer.Typer(name="SecretsCLI", help="SecretsCLI — secure secrets from any device.", add_completion=True, rich_markup_mode="rich")
@@ -16,6 +54,7 @@ app = typer.Typer(name="SecretsCLI", help="SecretsCLI — secure secrets from an
 # Register subcommand groups
 app.add_typer(project_app, name="project")
 app.add_typer(secrets_app, name="secrets")
+app.add_typer(workspace_app, name="workspace")
 
 
 @app.command()
@@ -60,9 +99,13 @@ def init(
         if credentials is None:
             rich.print("Cancelled by user")
             raise typer.Exit(0)
-            
-        master_key, encrypted_master_key, salt = EncryptionService.setup_user(credentials["password"])
-        credentials["encrypted_master_key"] = encrypted_master_key
+        
+        # Generate keypair and encrypt private key
+        private_key, public_key, encrypted_private_key, salt = EncryptionService.setup_user(credentials["password"])
+        
+        # Prepare credentials for API
+        credentials["public_key"] = base64.b64encode(public_key).decode()
+        credentials["encrypted_private_key"] = encrypted_private_key  # Already base64 encoded
         credentials["key_salt"] = salt
 
         # Create account
@@ -73,7 +116,7 @@ def init(
         
         # Auto-login after signup to get tokens
         rich.print("[green]Account created! Logging you in...[/green]")
-        if not _perform_login_({"email": credentials["email"], "password": credentials["password"]}, master_key):
+        if not _perform_login_({"email": credentials["email"], "password": credentials["password"]}, (private_key, public_key)):
             rich.print("[red]Auto-login failed. Please run 'secretscli login' manually.[/red]")
             raise typer.Exit(1)
         

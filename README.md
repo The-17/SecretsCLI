@@ -34,21 +34,14 @@ secretscli init
 # Create your first project
 secretscli project create my-app
 
-# If you have no secrets in .env file
-# Add secrets
-secretscli set DATABASE_URL=postgresql://
-secretscli set API_KEY=sk_live_
-secretscli set STRIPE_SECRET=sk_test_
+# Add secrets (multiple at once)
+secretscli secrets set DATABASE_URL=postgresql://... API_KEY=sk_live_... STRIPE_SECRET=sk_test_...
 
-or
+# Or add one at a time
+secretscli secrets set DATABASE_URL=postgresql://...
 
-secretscli set DATABASE_URL=postgresql://, API_KEY=sk_live_, STRIPE_SECRET=sk_test_
-
-# Pull secrets to .env file
-secretscli pull
-
-# if you already have secrets in .env file and just setting up secretscli for the first time
-secretscli push # Reads your .env file and stores your secrets for anytime access
+# If you already have a .env file, push them to the cloud
+secretscli secrets push
 ```
 
 ### On a New Machine
@@ -57,11 +50,11 @@ secretscli push # Reads your .env file and stores your secrets for anytime acces
 pip install secretscli
 secretscli login
 
-# Connect the codebase to your project
-secretscli projects use my-app
+# Connect to your project
+secretscli project use my-app
 
 # Pull your secrets
-secretscli pull
+secretscli secrets pull
 
 # That's it! Your .env file is ready
 ```
@@ -109,28 +102,24 @@ Examples:
 ## Command Reference
 
 ### Account Management
-- `secretscli init` - Create a new account
+- `secretscli init` - Create a new account or setup existing
 - `secretscli login` - Login to your account
-- `secretscli logout` - Logout
-- `secretscli status` - Show current login status
+- `secretscli guide` - Interactive quick-start guide
 
 ### Project Management
-- `secretscli project create <name>` - Create a new project
+- `secretscli project create <name> [-d "description"]` - Create a new project
 - `secretscli project list` - List all projects
-- `secretscli project use <name>` - Set active project
-- `secretscli project delete <name>` - Delete a project
+- `secretscli project use <name>` - Set active project for current directory
+- `secretscli project update <name> [-n new-name] [-d "desc"]` - Update project
+- `secretscli project delete <name> [-f]` - Delete a project
 
 ### Secret Management
-- `secretscli set <KEY> [value]` - Create or update a secret
-- `secretscli get <KEY>` - Get a single secret value
-- `secretscli list` - List all secret keys
-- `secretscli delete <KEY>` - Delete a secret
-- `secretscli pull` - Download all secrets to .env
-- `secretscli push` - Upload .env secrets to cloud
-
-### Utility
-- `secretscli config` - Configure CLI settings
-- `secretscli help` - Show help information
+- `secretscli secrets set KEY=value [KEY2=value2...]` - Create or update secrets
+- `secretscli secrets get <KEY>` - Get a single secret value
+- `secretscli secrets list [-v]` - List all secret keys (use -v to show values)
+- `secretscli secrets delete <KEY>` - Delete a secret
+- `secretscli secrets pull` - Download all secrets to .env
+- `secretscli secrets push` - Upload .env secrets to cloud
 
 For detailed command documentation, see [COMMANDS.md](docs/COMMANDS.md).
 
