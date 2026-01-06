@@ -1,181 +1,181 @@
 # SecretsCLI
-> Secure, simple secrets management for developers across all environments.
+> Secure, simple secrets management for developers
 
-SecretsCLI is a command-line tool that makes managing environment variables and secrets effortless. Install once, login anywhere, and access your secrets instantly - no file sharing, no copy-pasting, no security risks.
+Stop sharing `.env` files over Slack.
 
 [![PyPI version](https://badge.fury.io/py/secretscli.svg)](https://badge.fury.io/py/secretscli)
 [![Python Version](https://img.shields.io/pypi/pyversions/secretscli.svg)](https://pypi.org/project/secretscli/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://github.com/The-17/secretscli/tree/main/docs)
 
-## Why SecretsCLI?
+---
 
-**The Problem:**
-- Sharing `.env` files via Slack/email is insecure
-- Setting up new machines means manually copying secrets
-- Team members need constant access to updated credentials
-- Rotating secrets requires notifying everyone
+## The Problem
 
-**The Solution:**
-SecretsCLI provides encrypted, centralized secret storage with instant access from any machine.
+We've all been there:
+- "Hey, can you send me the database credentials?"
+- "Which `.env` file is the latest one?"
+- "I just set up a new laptop and now I need to ask everyone for secrets again"
 
-## Quick Start
+Sharing secrets through Slack, email, or sticky notes is a mess. It's insecure, hard to track, and honestly just annoying.
 
-### Installation
+## What SecretsCLI Does
+
+It's simple: **one command to pull all your secrets, anywhere.**
+
 ```bash
 pip install secretscli
+secretscli login
+secretscli project use my-app
+secretscli secrets pull
 ```
 
+That's it. Your `.env` file is ready. No asking around. No digging through old messages.
+
+---
+
+## How It Works
+
+1. **You store secrets once** - encrypted, in the cloud
+2. **Your team pulls them anywhere** - new laptop, CI/CD, staging server
+3. **Server never sees plaintext** - zero-knowledge encryption
+
+No more "which version is correct?" - there's one source of truth.
+
+---
+
+## Getting Started
+
 ### First Time Setup
+
+New to SecretsCLI? Here's how to get started:
+
 ```bash
-# Create an account
+pip install secretscli
+
+# Create your account
 secretscli init
 
-# Create your first project
+# Create a project for your app
 secretscli project create my-app
 
-# Add secrets (multiple at once)
-secretscli secrets set DATABASE_URL=postgresql://... API_KEY=sk_live_... STRIPE_SECRET=sk_test_...
+# Add your secrets
+secretscli secrets set DATABASE_URL=postgresql://... API_KEY=sk_live_...
 
-# Or add one at a time
-secretscli secrets set DATABASE_URL=postgresql://...
-
-# If you already have a .env file, push them to the cloud
+# Or if you already have a .env file, just push it
 secretscli secrets push
 ```
 
-### On a New Machine
+### Setting Up a New Machine
+
+Already have an account? Just pull your secrets:
+
 ```bash
-# Install and login
 pip install secretscli
 secretscli login
 
 # Connect to your project
 secretscli project use my-app
 
-# Pull your secrets
+# Pull all secrets
 secretscli secrets pull
-
-# That's it! Your .env file is ready
+# Done - your .env is ready
 ```
 
-## Key Features
+### Creating a Project in a Specific Workspace
 
-### **End-to-End Encryption**
-- Zero-knowledge architecture - API never sees your plaintext secrets
-- Each user has unique encryption keys
+Want to create a project in a team workspace instead of your personal one?
 
-### **Cross-Device Access**
-- Login from any machine, all you have to do is install the package
-- Instant access to all your secrets
-- No manual file transfers
+```bash
+# See all your workspaces
+secretscli workspace list
 
-### **Project Organization**
-- Group secrets by project
-- Clean namespace management
+# Switch to the workspace you want
+secretscli workspace switch "Backend Team"
 
-### **Developer Experience**
-- Simple, intuitive commands
-- Automatic `.env` and `.env.example` files generation
-- Works with any framework or language
+# Now create your project - it goes into the selected workspace
+secretscli project create api-service
+```
 
+### Team Collaboration
 
-## Core Concepts
+Got a team? Here's how to share secrets securely:
 
-### Projects
-Projects are containers that organize related secrets. Think of them as folders for your environment variables.
+```bash
+# Create a team workspace
+secretscli workspace create "Backend Team"
 
-Example projects:
-- `my-web-app-prod` - Production secrets
-- `my-web-app-staging` - Staging secrets
-- `mobile-app` - Mobile application secrets
+# Invite your teammates
+secretscli workspace invite alice@company.com
+secretscli workspace invite bob@company.com
 
-### Secrets
-Secrets are encrypted key-value pairs (environment variables) stored within projects.
+# Create a shared project
+secretscli project create shared-api
 
-Examples:
-- `DATABASE_URL=postgresql://...`
-- `API_KEY=sk_live_...`
-- `STRIPE_SECRET=sk_test_...`
+# Your teammates just need to:
+pip install secretscli
+secretscli login
+secretscli project use shared-api
+secretscli secrets pull
+# They now have all the secrets
+```
 
+Everyone in the workspace gets the same secrets. When you update something, they get it on their next pull.
 
-## Command Reference
+---
 
-### Account Management
-- `secretscli init` - Create a new account or setup existing
-- `secretscli login` - Login to your account
-- `secretscli guide` - Interactive quick-start guide
+## Security (the boring-but-important part)
 
-### Project Management
-- `secretscli project create <name> [-d "description"]` - Create a new project
-- `secretscli project list` - List all projects
-- `secretscli project use <name>` - Set active project for current directory
-- `secretscli project update <name> [-n new-name] [-d "desc"]` - Update project
-- `secretscli project delete <name> [-f]` - Delete a project
+- **Zero-knowledge** - API never sees your plaintext secrets
+- **End-to-end encryption** - X25519 + Fernet (industry standard)
+- **Your keys, your control** - stored in your system keychain
 
-### Secret Management
-- `secretscli secrets set KEY=value [KEY2=value2...]` - Create or update secrets
-- `secretscli secrets get <KEY>` - Get a single secret value
-- `secretscli secrets list [-v]` - List all secret keys (use -v to show values)
-- `secretscli secrets delete <KEY>` - Delete a secret
-- `secretscli secrets pull` - Download all secrets to .env
-- `secretscli secrets push` - Upload .env secrets to cloud
+We can't read your secrets even if we wanted to.
 
-For detailed command documentation, see [COMMANDS.md](docs/COMMANDS.md).
+---
 
+## Full Documentation
 
-## Multi-Language Implementations
+- **[Command Reference](docs/COMMANDS.md)** - Every command explained
+- **[Developer Guide](docs/DEVELOPMENT.md)** - Contributing, testing, architecture
 
-SecretsCLI is designed to support implementations in any programming language:
+---
 
-### Official Implementation
-- **Python** - This repository
+## Other Languages
 
-### Community Implementations - Feel free to implement any of this!
-- **Go** - Coming soon
-- **Rust** - Coming soon
-- **JavaScript/Node** - Coming soon
-- **Java** - Coming soon
+This is the Python implementation, but SecretsCLI can be built in any language - Go, Rust, JavaScript, whatever you prefer.
 
-Want to create an implementation in your language? Check out [CONTRIBUTING.md](CONTRIBUTING.md)!
+If you want to create an implementation in another language:
+1. [Open an issue](https://github.com/The-17/SecretsCLI/issues/new?title=New%20Language%20Implementation:%20[Language]&body=I%27d%20like%20to%20implement%20SecretsCLI%20in%20[Language]) with the title "New Language Implementation: [Language]"
+2. We'll create an official repository under our org
+3. You build it, we help maintain it
 
-## Contributing
+This keeps all implementations organized and gives contributors proper credit.
 
-We welcome contributions! Whether you're:
-- Fixing bugs
-- Adding features
-- Improving documentation
-- Creating implementations in other languages
-
-Please read our [CONTRIBUTING.md](CONTRIBUTING.md) guide.
-
+---
 
 ## Requirements
 
-- Python 3.9 or higher
-- pip
-- Internet connection for API access
+- Python 3.9+
+- Internet connection
 
+---
 
-## License
+## Contributing
 
-SecretsCLI is open-source software licensed under the [MIT License](LICENSE).
+Found a bug? Got an idea? PRs are welcome.
 
+Check out [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+
+---
 
 ## Links
 
-- **Documentation**: [docs/](docs/)
-- **API Documentation**: [API documentation](secrets-api-orpin.vercel.app)
-- **GitHub**: [https://github.com/The-17/secretscli](https://github.com/The-17/secretscli)
-- **PyPI**: [https://pypi.org/project/secretscli/](https://pypi.org/project/secretscli/)
-- **Issues**: [https://github.com/The-17/secretscli/issues](https://github.com/The-17/secretscli/issues)
+- [GitHub](https://github.com/The-17/SecretsCLI)
+- [PyPI](https://pypi.org/project/secretscli/)
+- [Report an Issue](https://github.com/The-17/SecretsCLI/issues)
 
-## Support
+---
 
-- [Documentation](docs/)
-- [Report a Bug](https://github.com/The-17/secretscli/issues)
-- [Request a Feature](https://github.com/The-17/secretscli/issues)
+If this saves you time, consider giving it a star. It helps others find it.
 
-## Show Your Support
-
-If SecretsCLI helps you manage secrets better, please give it a star on GitHub!
+MIT License

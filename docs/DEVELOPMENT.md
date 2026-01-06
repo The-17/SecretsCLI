@@ -1,107 +1,87 @@
 # SecretsCLI Developer Guide
 
-> A comprehensive guide for developers working on SecretsCLI.
+For developers working on SecretsCLI.
+
+---
 
 ## Quick Start
 
 ```bash
-# Clone the repository
 git clone https://github.com/The-17/SecretsCLI.git
 cd SecretsCLI
-
-# Install with dev dependencies
 poetry install --with dev
-
-# Activate virtual environment
-poetry shell
-
-# Run tests
-pytest tests/ -v
+poetry run pytest tests/ -v
 ```
 
 ---
 
-## Architecture Overview
+## Project Structure
 
 ```
 secretscli/
-├── cli.py                 # Main Typer app, command groups
-├── auth.py                # Login/signup/logout flows
-├── encryption.py          # Cryptographic operations
-├── config.py              # Configuration schemas
+├── cli.py               # Main Typer app, command groups
+├── auth.py              # Login/signup/logout flows
+├── encryption.py        # Cryptographic operations
+├── config.py            # Configuration schemas
 ├── api/
-│   └── client.py          # API client wrapper
+│   └── client.py        # API client wrapper
 ├── commands/
-│   ├── project.py         # Project CRUD commands
-│   ├── secrets.py         # Secret management
-│   └── workspace.py       # Workspace management
+│   ├── project.py       # Project CRUD commands
+│   ├── secrets.py       # Secret management
+│   └── workspace.py     # Workspace management
 └── utils/
-    ├── credentials.py     # Token/key storage
-    ├── decorators.py      # @require_auth decorator
-    └── env_manager.py     # .env file handling
+    ├── credentials.py   # Token/key storage
+    ├── decorators.py    # @require_auth decorator
+    └── env_manager.py   # .env file handling
 ```
 
 ---
 
 ## Key Concepts
 
-### 1. Workspace Selection vs Project Binding
+### Workspace Selection vs Project Binding
 
-| Concept | Storage | Purpose |
-|---------|---------|---------|
-| **Selected Workspace** | Global config (`~/.secretscli/config.json`) | Default for NEW project creation |
-| **Project Workspace** | Project config (`.secretscli/project.json`) | Permanent binding for THIS project |
+**Selected Workspace** - Stored in global config (`~/.secretscli/config.json`). Used as default for NEW project creation.
 
-**Important**: `workspace switch` only changes where NEW projects are created. It does NOT affect existing projects.
+**Project Workspace** - Stored in project config (`.secretscli/project.json`). Permanent binding for THIS project.
 
-### 2. Encryption Model
+`workspace switch` only changes where NEW projects are created. It doesn't affect existing projects.
 
-```
-User Keypair (X25519)
-├── Private Key → Stored in OS keychain
-└── Public Key → Sent to server
+### Encryption Model
 
-Workspace Key (Fernet)
-├── Encrypted for each user with their public key
-├── Stored in global cache (base64)
-└── Copied to project.json for active project
+**User Keypair (X25519)** - Private key stored in OS keychain, public key on server.
 
-Secret Encryption
-├── Encrypt: plaintext → Fernet(workspace_key) → ciphertext
-└── Decrypt: ciphertext → Fernet(workspace_key) → plaintext
-```
+**Workspace Key (Fernet)** - Each workspace has one. Encrypted for each user with their public key.
 
-### 3. Authentication Flow
+**Secret Encryption** - Secrets encrypted/decrypted with workspace key.
 
-```
-login
-├── POST /auth/login (email, password)
-├── Receive JWT tokens + encrypted workspace keys
-├── Store tokens in ~/.secretscli/token.json
-├── Decrypt workspace keys using private key
-├── Cache workspaces in global config
-└── Set personal workspace as default selection
-```
+Password → User Key → decrypts Private Key → decrypts Workspace Key → decrypts Secrets
+
+### Authentication Flow
+
+1. POST /auth/login (email, password)
+2. Receive JWT tokens + encrypted workspace keys
+3. Store tokens in ~/.secretscli/token.json
+4. Decrypt workspace keys using private key
+5. Cache workspaces in global config
+6. Set personal workspace as default selection
 
 ---
 
 ## Running Tests
 
 ```bash
-# All tests with verbose output
-pytest tests/ -v
+# All tests
+poetry run pytest tests/ -v
 
-# With coverage report
-pytest tests/ --cov=secretscli --cov-report=html
+# With coverage
+poetry run pytest tests/ --cov=secretscli --cov-report=html
 
-# Specific test file
-pytest tests/test_encryption.py -v
+# Specific file
+poetry run pytest tests/test_encryption.py -v
 
-# Specific test class
-pytest tests/test_credentials.py::TestWorkspaceCaching -v
-
-# Run only fast unit tests
-pytest tests/test_encryption.py tests/test_credentials.py -v
+# Specific class
+poetry run pytest tests/test_credentials.py::TestWorkspaceCaching -v
 ```
 
 ### Test Structure
@@ -112,24 +92,28 @@ tests/
 ├── test_encryption.py       # Encryption unit tests
 ├── test_credentials.py      # Credentials manager tests
 ├── test_auth.py             # Login/signup tests
-├── test_commands/
-│   ├── test_project.py      # Project command tests
-│   ├── test_secrets.py      # Secrets command tests
-│   └── test_workspace.py    # Workspace command tests
-└── test_integration.py      # End-to-end flows
+└── test_commands/
+    ├── test_project.py      # Project command tests
+    ├── test_secrets.py      # Secrets command tests
+    └── test_workspace.py    # Workspace command tests
 ```
 
 ### Mocking Strategy
 
-- **Keyring**: Mocked with in-memory dict (for CI/CD)
-- **API Client**: Mocked responses, no network calls
-- **File System**: Temp directories for config files
+- **Keyring** - Mocked with in-memory dict (for CI/CD)
+- **API Client** - Mocked responses, no network calls
+- **File System** - Temp directories for config files
 
 ---
 
 ## Adding New Commands
 
-### 1. Create the command
+1. Create the command in the appropriate file
+2. Use `@require_auth` decorator if login is required
+3. Register in `cli.py` if it's a new command group
+4. Write tests
+
+Example:
 
 ```python
 # secretscli/commands/myfeature.py
@@ -145,57 +129,34 @@ def do_action():
     pass
 ```
 
-### 2. Register in CLI
-
-```python
-# secretscli/cli.py
-from .commands.myfeature import myfeature_app
-app.add_typer(myfeature_app, name="myfeature")
-```
-
-### 3. Write tests
-
-```python
-# tests/test_commands/test_myfeature.py
-def test_action_success():
-    result = runner.invoke(app, ["myfeature", "action"])
-    assert result.exit_code == 0
-```
-
 ---
 
 ## Code Style
 
 ```bash
 # Format code
-black secretscli/ tests/
+poetry run black secretscli/ tests/
 
 # Check without changing
-black --check secretscli/ tests/
+poetry run black --check secretscli/ tests/
 ```
 
 ---
 
 ## Common Issues
 
-### "No workspace key found"
-- User hasn't run `project use <name>` to set up project.json
-- Workspace key wasn't cached on login (re-login to fix)
+**"No workspace key found"** - User hasn't run `project use <name>` or workspace key wasn't cached on login. Re-login to fix.
 
-### "Private key not found"
-- Keys not stored in OS keychain
-- User needs to run `secretscli signup` to regenerate
+**"Private key not found"** - Keys not stored in OS keychain. User needs to run `secretscli init` again.
 
-### Token expired
-- Decorator auto-refreshes, but if refresh fails:
-- User needs to `secretscli login` again
+**Token expired** - Decorator auto-refreshes, but if refresh fails, user needs to `secretscli login` again.
 
 ---
 
 ## Release Checklist
 
-- [ ] All tests passing: `pytest tests/ -v`
-- [ ] Code formatted: `black --check secretscli/`
+- [ ] All tests passing: `poetry run pytest tests/ -v`
+- [ ] Code formatted: `poetry run black --check secretscli/`
 - [ ] Version bumped in `pyproject.toml`
 - [ ] CHANGELOG updated
 - [ ] Git tagged: `git tag v0.x.x`

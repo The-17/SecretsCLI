@@ -1,52 +1,6 @@
 # SecretsCLI Architecture
 
-This document explains how SecretsCLI is structured to help contributors understand the codebase quickly.
-
----
-
-## High-Level Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                           USER                                       │
-│                    (runs CLI commands)                               │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                         cli.py                                       │
-│                   (Main Entry Point)                                 │
-│                                                                      │
-│  • init, login, guide commands                                       │
-│  • Registers subcommand groups (project, secrets, workspace)         │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │
-        ┌───────────────────┼───────────────────┐
-        ▼                   ▼                   ▼
-┌───────────────┐   ┌───────────────┐   ┌───────────────┐
-│ project.py    │   │ secrets.py    │   │ workspace.py  │
-│               │   │               │   │               │
-│ create, list  │   │ set, get      │   │ create, list  │
-│ use, delete   │   │ pull, push    │   │ invite, switch│
-└───────┬───────┘   └───────┬───────┘   └───────┬───────┘
-        │                   │                   │
-        └───────────────────┼───────────────────┘
-                            │
-         ┌──────────────────┼──────────────────┐
-         ▼                  ▼                  ▼
-┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│  api/client  │   │  encryption  │   │  env_manager │
-│              │   │              │   │              │
-│ Talks to API │   │ Symmetric +  │   │ Read/write   │
-│ server       │   │ Asymmetric   │   │ .env files   │
-└──────────────┘   └──────────────┘   └──────────────┘
-         │
-         ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│                     SecretsCLI API Server                            │
-│                  (Stores encrypted secrets)                          │
-└──────────────────────────────────────────────────────────────────────┘
-```
+How SecretsCLI is structured - for contributors who want to understand the codebase.
 
 ---
 
@@ -54,219 +8,140 @@ This document explains how SecretsCLI is structured to help contributors underst
 
 ```
 secretscli/
-├── __init__.py          # Package initialization
-├── cli.py               # 🚀 MAIN: Typer app, top-level commands
+├── cli.py               # Main entry point, top-level commands
 ├── config.py            # Configuration paths & schemas
-├── auth.py              # Authentication (login, signup helpers)
-├── encryption.py        # 🔐 Symmetric + Asymmetric encryption
+├── auth.py              # Login/signup helpers
+├── encryption.py        # Symmetric + Asymmetric encryption
 ├── prompts.py           # Questionary prompts & styling
 │
 ├── api/
-│   └── client.py        # 🌐 API client for server communication
+│   └── client.py        # API client for server communication
 │
 ├── commands/
-│   ├── __init__.py      # Exports app instances
 │   ├── project.py       # Project management commands
 │   ├── secrets.py       # Secret management commands
-│   └── workspace.py     # Workspace & team management (NEW)
+│   └── workspace.py     # Workspace & team management
 │
 └── utils/
-    ├── __init__.py
-    ├── credentials.py   # 🔑 Token, key, and config storage
+    ├── credentials.py   # Token, key, and config storage
     ├── decorators.py    # @require_auth decorator
-    ├── env_manager.py   # 📄 .env file read/write
-    └── utils.py         # Misc helper functions
+    ├── env_manager.py   # .env file read/write
+    └── utils.py         # Misc helpers
 ```
 
 ---
 
-## Workspace-Based Encryption Model
+## How Commands Flow
 
-### How Secrets Are Protected
+1. User runs a command (e.g., `secretscli secrets set`)
+2. `cli.py` routes to the appropriate command file
+3. `@require_auth` decorator checks/refreshes tokens
+4. Command uses `CredentialsManager` for config, `EncryptionService` for crypto
+5. `api_client` sends requests to the server
+6. Results saved locally (`.env`, `project.json`, etc.)
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ZERO-KNOWLEDGE ARCHITECTURE                       │
-│                                                                      │
-│  The server NEVER sees:                                              │
-│    • Your plaintext secrets                                          │
-│    • Your private key                                                │
-│    • Your workspace keys                                             │
-│                                                                      │
-│  The server ONLY stores encrypted blobs.                             │
-└─────────────────────────────────────────────────────────────────────┘
+---
 
-Password
-    │
-    ▼ (PBKDF2)
-User Key ──────────────────┐
-    │                      │
-    │ encrypts             │
-    ▼                      │
-Private Key ◄──────────────┘
-    │
-    │ decrypts
-    ▼
-Workspace Key (per workspace)
-    │
-    │ encrypts/decrypts
-    ▼
-Secrets
-```
+## Encryption Model
 
-### Key Hierarchy
+SecretsCLI uses zero-knowledge encryption. The server never sees plaintext secrets.
 
-| Key | Purpose | Stored Where | Encrypted With |
-|-----|---------|--------------|----------------|
-| User Key | Derived from password | Never stored | — |
-| Private Key | Decrypt workspace keys | API + Keychain | User Key |
-| Public Key | Others encrypt for you | API (public) | — |
-| Workspace Key | Encrypt/decrypt secrets | API (per-member) | Recipient's Public Key |
+### Key Types
+
+**User Key** - Derived from password using PBKDF2 (100k iterations). Never stored.
+
+**Private Key** - X25519 key for decrypting workspace keys. Stored in OS keychain.
+
+**Public Key** - Others use this to encrypt workspace keys for you. Stored on API.
+
+**Workspace Key** - Fernet key for encrypting/decrypting secrets. Each workspace has one.
+
+### Flow
+
+Password → User Key → decrypts Private Key → decrypts Workspace Key → decrypts Secrets
 
 ---
 
 ## Data Flows
 
-### 1. Registration
+### Registration
 
-```
-CLI                                    API
- │                                      │
- │ 1. Generate keypair (X25519)         │
- │ 2. Derive user_key from password     │
- │ 3. Encrypt private_key with user_key │
- │                                      │
- │ ──POST /register──────────────────►  │
- │   {email, password, public_key,      │
- │    encrypted_private_key, key_salt}  │
- │                                      │
- │ ◄─────────────────────────────────── │
- │   {user, personal_workspace}         │
- │                                      │
- │ 4. Store private_key in OS keychain  │
-```
+1. Generate X25519 keypair
+2. Derive user_key from password (PBKDF2)
+3. Encrypt private_key with user_key
+4. Send to API: `{email, password, public_key, encrypted_private_key, salt}`
+5. Store private_key in OS keychain
 
-### 2. Login
+### Login
 
-```
-CLI                                    API
- │                                      │
- │ ──POST /login─────────────────────►  │
- │   {email, password}                  │
- │                                      │
- │ ◄─────────────────────────────────── │
- │   {tokens, key_salt,                 │
- │    encrypted_private_key,            │
- │    workspaces: [{                    │
- │      id, name,                       │
- │      encrypted_workspace_key         │
- │    }]}                               │
- │                                      │
- │ 1. Derive user_key from password     │
- │ 2. Decrypt private_key               │
- │ 3. For each workspace:               │
- │    decrypt workspace_key             │
- │ 4. Store keys in keychain/config     │
-```
+1. API returns: `{tokens, encrypted_private_key, salt, workspaces}`
+2. Derive user_key from password
+3. Decrypt private_key
+4. For each workspace: decrypt its workspace_key
+5. Cache everything locally
 
-### 3. Setting a Secret
+### Setting a Secret
 
-```
-User: secretscli secrets set API_KEY=sk_live_123
+1. Get workspace_key from project config
+2. Encrypt value with workspace_key (Fernet)
+3. Send to API: `{project_id, key, encrypted_value}`
+4. Write plaintext to local `.env`
 
-CLI                                    API
- │                                      │
- │ 1. Get active workspace_key          │
- │ 2. Encrypt: workspace_key(value)     │
- │                                      │
- │ ──POST /secrets────────────────────► │
- │   {project_id, key, encrypted_value} │
- │                                      │
- │ 3. Optionally write plain to .env    │
-```
+### Inviting a Team Member
 
-### 4. Inviting a Team Member
-
-```
-Alice invites Bob to workspace
-
-CLI (Alice)                            API
- │                                      │
- │ ──GET /users/bob@.../public-key───►  │
- │ ◄─────────────────────────────────── │
- │   {public_key}                       │
- │                                      │
- │ 1. Encrypt workspace_key with        │
- │    Bob's public_key (NaCl SealedBox) │
- │                                      │
- │ ──POST /workspaces/{id}/members───►  │
- │   {email: bob, role: member,         │
- │    encrypted_workspace_key}          │
- │                                      │
-
-Next time Bob logs in, he receives
-the encrypted_workspace_key and can
-decrypt it with his private key.
-```
+1. Fetch invited user's public_key from API
+2. Encrypt workspace_key with their public_key (NaCl SealedBox)
+3. Send to API: `{email, role, encrypted_workspace_key}`
+4. When they login, they decrypt it with their private_key
 
 ---
 
 ## Module Responsibilities
 
-| Module | Responsibility |
-|--------|----------------|
-| `cli.py` | Entry point, registers commands |
-| `auth.py` | Login/signup flows |
-| `encryption.py` | Symmetric (Fernet) + Asymmetric (NaCl) crypto |
-| `api/client.py` | HTTP requests with auth |
-| `utils/credentials.py` | Tokens, keys, workspace config storage |
-| `utils/decorators.py` | `@require_auth` with auto token refresh |
-| `utils/env_manager.py` | Parse and write .env files |
-| `commands/project.py` | Project CRUD |
-| `commands/secrets.py` | Secrets CRUD + pull/push |
-| `commands/workspace.py` | Workspace & member management |
+**cli.py** - Entry point, registers commands
 
----
+**auth.py** - Login/signup flows
 
-## Cryptography
+**encryption.py** - Symmetric (Fernet) + Asymmetric (NaCl) crypto
 
-See [CRYPTO_STANDARD.md](./CRYPTO_STANDARD.md) for:
-- Required algorithms for cross-language compatibility
-- Wire formats for registration/login/invite
-- Implementation examples in Python, Go, Rust
+**api/client.py** - HTTP requests with auth headers
+
+**utils/credentials.py** - Tokens, keys, workspace config storage
+
+**utils/decorators.py** - `@require_auth` with auto token refresh
+
+**utils/env_manager.py** - Parse and write .env files
+
+**commands/project.py** - Project CRUD
+
+**commands/secrets.py** - Secrets CRUD + pull/push
+
+**commands/workspace.py** - Workspace & member management
 
 ---
 
 ## Adding a New Command
 
-1. **Choose the right file:**
-   - Top-level → `cli.py`
-   - Project-related → `commands/project.py`
-   - Secrets-related → `commands/secrets.py`
-   - Workspace-related → `commands/workspace.py`
-
-2. **Use the auth decorator:**
+1. Choose the right file based on what it does
+2. Add the auth decorator if it needs login:
    ```python
    from ..utils.decorators import require_auth
    
    @app.command()
    @require_auth
    def my_command():
-       # Auth guaranteed, tokens refreshed if needed
        pass
    ```
 
-3. **Access workspace context:**
+3. Access workspace key if needed:
    ```python
    from ..utils.credentials import CredentialsManager
-   
-   workspace_key = CredentialsManager.get_active_workspace_key()
+   workspace_key = CredentialsManager.get_project_workspace_key()
    ```
 
 ---
 
-## Questions?
+## Related Docs
 
-- Open an issue on GitHub
-- Check [CRYPTO_STANDARD.md](./CRYPTO_STANDARD.md) for crypto details
-- Check [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines
+- [CRYPTO_STANDARD.md](./CRYPTO_STANDARD.md) - Crypto algorithms for cross-language compatibility
+- [DEVELOPMENT.md](./DEVELOPMENT.md) - Testing and contributing
