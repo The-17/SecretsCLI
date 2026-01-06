@@ -207,7 +207,7 @@ def guide():
     elif "Returning" in user_type:
         returning_guide = """
 [bold yellow]Step 1:[/bold yellow] Install SecretsCLI
-  [dim]$[/dim] [green]pip install secretscli[/green]
+  [dim]$[/dim] [green]pip install secretscli-py[/green]
 
 [bold yellow]Step 2:[/bold yellow] Login to your account
   [dim]$[/dim] [green]secretscli login[/green]

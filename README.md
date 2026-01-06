@@ -23,7 +23,7 @@ Sharing secrets through Slack, email, or sticky notes is a mess. It's insecure, 
 It's simple: **one command to pull all your secrets, anywhere.**
 
 ```bash
-pip install secretscli
+pip install secretscli-py
 secretscli login
 secretscli project use my-app
 secretscli secrets pull
@@ -50,7 +50,7 @@ No more "which version is correct?" - there's one source of truth.
 New to SecretsCLI? Here's how to get started:
 
 ```bash
-pip install secretscli
+pip install secretscli-py
 
 # Create your account
 secretscli init
@@ -70,7 +70,7 @@ secretscli secrets push
 Already have an account? Just pull your secrets:
 
 ```bash
-pip install secretscli
+pip install secretscli-py
 secretscli login
 
 # Connect to your project
@@ -112,7 +112,7 @@ secretscli workspace invite bob@company.com
 secretscli project create shared-api
 
 # Your teammates just need to:
-pip install secretscli
+pip install secretscli-py
 secretscli login
 secretscli project use shared-api
 secretscli secrets pull
