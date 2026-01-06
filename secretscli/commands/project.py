@@ -81,15 +81,11 @@ def create(
         rich.print("[red]Project name is required.[/red]")
         raise typer.Exit(1)
     
-    # Check if workspace already set in project.json (existing project)
-    project_config = CredentialsManager.get_project_config()
-    workspace_id = project_config.get("workspace_id") if project_config else None
+    # For project CREATE, ALWAYS use the SELECTED workspace (set by workspace switch)
+    # NOT the existing project.json workspace - that's for a different project
+    workspace_id = CredentialsManager.get_selected_workspace_id()
     
-    # If no workspace in project.json, use the SELECTED workspace (set by workspace switch)
-    if not workspace_id:
-        workspace_id = CredentialsManager.get_selected_workspace_id()
-    
-    # Final fallback: find personal workspace
+    # Fallback: find personal workspace
     if not workspace_id:
         workspaces = CredentialsManager.get_workspace_keys()
         for ws_id, ws in workspaces.items():
