@@ -33,3 +33,6 @@ dev = [
 
 [tool.poetry.scripts]
 secretscli = "secretscli.cli:app"
+
+[tool.poetry]
+packages = [{include = "secretscli"}]

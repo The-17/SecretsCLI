@@ -3,8 +3,8 @@
 
 Stop sharing `.env` files over Slack.
 
-[![PyPI version](https://badge.fury.io/py/secretscli.svg)](https://badge.fury.io/py/secretscli)
-[![Python Version](https://img.shields.io/pypi/pyversions/secretscli.svg)](https://pypi.org/project/secretscli/)
+[![PyPI version](https://badge.fury.io/py/secretscli-py.svg)](https://badge.fury.io/py/secretscli-py)
+[![Python Version](https://img.shields.io/pypi/pyversions/secretscli-py.svg)](https://pypi.org/project/secretscli-py/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -171,7 +171,7 @@ Check out [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 ## Links
 
 - [GitHub](https://github.com/The-17/SecretsCLI)
-- [PyPI](https://pypi.org/project/secretscli/)
+- [PyPI](https://pypi.org/project/secretscli-py/)
 - [Report an Issue](https://github.com/The-17/SecretsCLI/issues)
 
 ---
