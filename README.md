@@ -7,7 +7,6 @@ Stop sharing `.env` files over Slack.
 [![Python Version](https://img.shields.io/pypi/pyversions/secretscli-py.svg)](https://pypi.org/project/secretscli-py/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
 
 ## The Problem
 
@@ -31,7 +30,6 @@ secretscli secrets pull
 
 That's it. Your `.env` file is ready. No asking around. No digging through old messages.
 
----
 
 ## How It Works
 
@@ -41,7 +39,6 @@ That's it. Your `.env` file is ready. No asking around. No digging through old m
 
 No more "which version is correct?" - there's one source of truth.
 
----
 
 ## Getting Started
 
@@ -121,7 +118,6 @@ secretscli secrets pull
 
 Everyone in the workspace gets the same secrets. When you update something, they get it on their next pull.
 
----
 
 ## Security (the boring-but-important part)
 
@@ -131,14 +127,12 @@ Everyone in the workspace gets the same secrets. When you update something, they
 
 We can't read your secrets even if we wanted to.
 
----
 
 ## Full Documentation
 
 - **[Command Reference](docs/COMMANDS.md)** - Every command explained
 - **[Developer Guide](docs/DEVELOPMENT.md)** - Contributing, testing, architecture
 
----
 
 ## Other Languages
 
@@ -151,14 +145,12 @@ If you want to create an implementation in another language:
 
 This keeps all implementations organized and gives contributors proper credit.
 
----
 
 ## Requirements
 
 - Python 3.9+
 - Internet connection
 
----
 
 ## Contributing
 
@@ -166,7 +158,6 @@ Found a bug? Got an idea? PRs are welcome.
 
 Check out [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
----
 
 ## Links
 
@@ -174,8 +165,8 @@ Check out [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 - [PyPI](https://pypi.org/project/secretscli-py/)
 - [Report an Issue](https://github.com/The-17/SecretsCLI/issues)
 
----
 
 If this saves you time, consider giving it a star. It helps others find it.
 
 MIT License
+
