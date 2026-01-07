@@ -121,7 +121,6 @@ def temp_project_dir(tmp_path):
         "environment": "development",
         "workspace_id": None,
         "workspace_name": None,
-        "workspace_key": None,
         "last_pull": None,
         "last_push": None
     }

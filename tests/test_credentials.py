@@ -96,8 +96,7 @@ class TestProjectConfig:
             description="A test project",
             environment="production",
             workspace_id="ws-123",
-            workspace_name="My Workspace",
-            workspace_key="base64_key_here"
+            workspace_name="My Workspace"
         )
         
         config = CredentialsManager.get_project_config()
@@ -113,8 +112,7 @@ class TestProjectConfig:
             project_id="proj-123",
             project_name="my-project",
             workspace_id="ws-123",
-            workspace_name="Workspace",
-            workspace_key="key123"
+            workspace_name="Workspace"
         )
         
         # Update only one field
@@ -132,24 +130,33 @@ class TestProjectConfig:
             project_id="proj-123",
             project_name="test",
             workspace_id="ws-project-789",
-            workspace_name="Test",
-            workspace_key="key"
+            workspace_name="Test"
         )
         
         result = CredentialsManager.get_project_workspace_id()
         
         assert result == "ws-project-789"
     
-    def test_get_project_workspace_key(self, temp_project_dir, sample_workspace_key):
-        """Project workspace key should be decoded from base64."""
+    def test_get_project_workspace_key(self, temp_home, temp_project_dir, sample_workspace_key):
+        """Project workspace key should be fetched from global config via workspace_id."""
         key_b64 = base64.b64encode(sample_workspace_key).decode()
         
+        # Store workspace key in global config
+        CredentialsManager.store_workspace_keys({
+            "ws-123": {
+                "name": "Test Workspace",
+                "key": key_b64,
+                "role": "owner",
+                "type": "personal"
+            }
+        })
+        
+        # Configure project with workspace_id pointing to that workspace
         CredentialsManager.config_project(
             project_id="proj-123",
             project_name="test",
             workspace_id="ws-123",
-            workspace_name="Test",
-            workspace_key=key_b64
+            workspace_name="Test"
         )
         
         result = CredentialsManager.get_project_workspace_key()

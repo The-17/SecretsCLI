@@ -42,8 +42,7 @@ class TestSecretsSet:
             project_id="proj-123",
             project_name="test",
             workspace_id="ws-personal-123",
-            workspace_name="Personal",
-            workspace_key=key_b64
+            workspace_name="Personal"
         )
         
         mock_api.return_value = make_api_response(201, {"key": "API_KEY"})
@@ -65,8 +64,7 @@ class TestSecretsGet:
             project_id="proj-123",
             project_name="test",
             workspace_id="ws-personal-123",
-            workspace_name="Personal",
-            workspace_key=key_b64
+            workspace_name="Personal"
         )
         
         # Encrypt a test value
@@ -89,8 +87,7 @@ class TestSecretsList:
             project_id="proj-123",
             project_name="test",
             workspace_id="ws-personal-123",
-            workspace_name="Personal",
-            workspace_key=key_b64
+            workspace_name="Personal"
         )
         
         mock_api.return_value = make_api_response(200, [
@@ -114,8 +111,7 @@ class TestSecretsPush:
             project_id="proj-123",
             project_name="test",
             workspace_id="ws-personal-123",
-            workspace_name="Personal",
-            workspace_key=key_b64
+            workspace_name="Personal"
         )
         
         mock_api.return_value = make_api_response(200, {})
@@ -136,8 +132,7 @@ class TestSecretsPull:
             project_id="proj-123",
             project_name="test",
             workspace_id="ws-personal-123",
-            workspace_name="Personal",
-            workspace_key=key_b64
+            workspace_name="Personal"
         )
         
         mock_api.return_value = make_api_response(200, [])

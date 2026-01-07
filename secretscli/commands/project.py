@@ -122,11 +122,10 @@ def create(
     project_id = project_data.get("id")
     workspace_id = project_data.get("workspace_id")
     
-    # Get workspace info from global cache (key is already base64-encoded)
+    # Get workspace info from global cache
     workspace = CredentialsManager.get_workspace(workspace_id)
-    workspace_key_b64 = workspace.get("key")  # Already base64-encoded string
     
-    # Set project.json from API response
+    # Set project.json from API response (workspace_key is NOT stored here)
     CredentialsManager.config_project(
         project_id=project_id,
         project_name=project_name,
@@ -134,7 +133,6 @@ def create(
         environment="development",
         workspace_id=workspace_id,
         workspace_name=workspace.get("name"),
-        workspace_key=workspace_key_b64,
         last_pull=None,
         last_push=None
     )
@@ -203,7 +201,8 @@ def use_project(project_name: str):
     """
     Use a project.
     
-    Copies workspace key from global cache to project config.
+    Sets project config with workspace_id. Workspace key is looked up
+    from global config at runtime, not stored in project.json.
     """
     
     if not project_name:
@@ -219,14 +218,12 @@ def use_project(project_name: str):
     project_data = project.get("data", {})
     project_id = project_data.get("id")
     
-    # Get workspace info from API response
+    # Get workspace info from global cache
     workspace_id = project_data.get("workspace_id")
     workspace = CredentialsManager.get_workspace(workspace_id)
-    ws_key = workspace.get("key")
-    workspace_key_b64 = base64.b64encode(ws_key).decode() if ws_key else None
     workspace_name = workspace.get("name")
     
-    # Store project config with workspace info
+    # Store project config (workspace_key is NOT stored here)
     CredentialsManager.config_project(
         project_id=project_id,
         project_name=project_name,
@@ -234,7 +231,6 @@ def use_project(project_name: str):
         environment="development",
         workspace_id=workspace_id,
         workspace_name=workspace_name,
-        workspace_key=workspace_key_b64,
         last_pull=None,
         last_push=None
     )

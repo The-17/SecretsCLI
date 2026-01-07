@@ -8,10 +8,10 @@ never sees plaintext secrets.
 SECURITY MODEL:
 --------------
 1. User creates account with password
-2. A random master key is generated (Fernet key)
-3. Master key is encrypted using password (PBKDF2 + Fernet)
-4. Only the ENCRYPTED master key is stored on the server
-5. Secrets are encrypted with the master key before sending to API
+2. A keypair is generated (X25519 for key exchange)
+3. Private key is encrypted using password-derived key (PBKDF2 + Fernet)
+4. Only the ENCRYPTED private key is stored on the server
+5. Secrets are encrypted with workspace keys before sending to API
 
 This means:
 - Server stores only encrypted data

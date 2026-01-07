@@ -4,7 +4,8 @@ Credentials Manager for SecretsCLI
 Handles all credential storage operations:
 - JWT tokens (access/refresh) → stored in ~/.secretscli/token.json
 - User email → stored in ~/.secretscli/config.json  
-- Master encryption key → stored in OS keychain (via keyring)
+- Private key → stored in OS keychain (via keyring)
+- Workspace keys → cached in ~/.secretscli/config.json (keyed by workspace_id)
 - Project config → stored in ./.secretscli/project.json
 
 Usage:
@@ -13,13 +14,13 @@ Usage:
     # After login
     CredentialsManager.store_tokens(access, refresh, expires)
     CredentialsManager.set_email(email)
-    CredentialsManager.store_master_key(email, master_key)
+    CredentialsManager.store_keypair(email, private_key, public_key)
     
     # For API calls
     token = CredentialsManager.get_access_token()
     
     # For decrypting secrets
-    key = CredentialsManager.get_master_key(email)
+    workspace_key = CredentialsManager.get_project_workspace_key()
 """
 
 import json
@@ -164,7 +165,7 @@ class CredentialsManager:
         """
         Store the user's email address.
         
-        The email is used as the keyring identifier for the master key.
+        The email is used as the keyring identifier for the private key.
         
         Args:
             email: User's email address
@@ -198,12 +199,14 @@ class CredentialsManager:
         environment: str = "development",
         workspace_id: str = None,
         workspace_name: str = None,
-        workspace_key: str = None,
         last_pull: str = None, 
         last_push: str = None
     ) -> bool | None:
         """
         Configure the current directory's project binding.
+        
+        Note: workspace_key is NOT stored in project.json for security.
+        It's retrieved from global config via workspace_id.
         
         Args:
             project_id: UUID of the project
@@ -212,7 +215,6 @@ class CredentialsManager:
             environment: One of "development", "staging", "production"
             workspace_id: UUID of the workspace this project belongs to
             workspace_name: Workspace display name
-            workspace_key: Base64-encoded workspace encryption key
             last_pull: ISO timestamp of last pull (optional)
             last_push: ISO timestamp of last push (optional)
             
@@ -232,7 +234,6 @@ class CredentialsManager:
             "environment": environment,
             "workspace_id": workspace_id,
             "workspace_name": workspace_name,
-            "workspace_key": workspace_key,
             "last_pull": last_pull,
             "last_push": last_push
         }
@@ -289,13 +290,16 @@ class CredentialsManager:
         """
         Get the workspace key for the current project directory.
         
+        Retrieves the workspace_id from project.json and looks up the
+        corresponding key from the global workspace cache.
+        
         Returns:
-            32-byte workspace key, or None if not set
+            Workspace key bytes, or None if not found
         """
-        config = CredentialsManager.get_project_config()
-        if not config or not config.get("workspace_key"):
+        workspace_id = CredentialsManager.get_project_workspace_id()
+        if not workspace_id:
             return None
-        return base64.b64decode(config["workspace_key"])
+        return CredentialsManager.get_workspace_key(workspace_id)
 
     @staticmethod
     def get_project_workspace_id() -> str | None:
@@ -311,7 +315,7 @@ class CredentialsManager:
         Logout: clear all stored credentials.
         
         Removes:
-        - Master key from OS keychain
+        - Private key from OS keychain
         - Tokens from token.json
         - Email from config.json
         

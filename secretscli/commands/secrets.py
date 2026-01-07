@@ -28,14 +28,14 @@ DATA FLOW (set command):
 
 ENCRYPTION:
 ----------
-- Secrets are encrypted with user's master key before sending to API
+- Secrets are encrypted with the workspace key before sending to API
 - Server stores only encrypted values (zero-knowledge)
 - On pull/get, secrets are decrypted locally
 
 UTILITIES USED:
 --------------
 - EncryptionService: encrypt/decrypt secrets
-- CredentialsManager: get master key, project ID
+- CredentialsManager: get workspace key, project ID
 - EnvManager (env): read/write .env files
 - api_client: communicate with API server
 
@@ -48,7 +48,7 @@ TO ADD A NEW SECRETS COMMAND:
             ...
         # 2. Get credentials
         email = CredentialsManager.get_email()
-        master_key = CredentialsManager.get_master_key(email)
+        workspace_key = CredentialsManager.get_project_workspace_key()
         project_id = CredentialsManager.get_project_id()
         # 3. Call API and/or update .env
         ...
@@ -165,7 +165,7 @@ def get_secret(
     rich.print(f"[green]Successfully retrieved {key}[/green]")
     data = response.json()["data"]
 
-    # Auto-fetches master key
+    # Auto-fetches workspace key
     decrypted_value = EncryptionService.decrypt_secret(data["value"])
 
     rich.print(f"{key}={decrypted_value}")

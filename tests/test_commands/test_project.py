@@ -108,8 +108,7 @@ class TestProjectUpdate:
             project_id="proj-123",
             project_name="old-name",
             workspace_id="ws-123",
-            workspace_name="Test",
-            workspace_key="key"
+            workspace_name="Test"
         )
         
         mock_api.return_value = make_api_response(200, {

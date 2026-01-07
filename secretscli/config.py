@@ -39,6 +39,7 @@ TOKEN_SCHEMA = {
 }
 
 # Project-level configuration (per-directory)
+# Note: workspace_key is NOT stored here - it's retrieved from global config via workspace_id
 PROJECT_SCHEMA = {
     "project_id": None,         # UUID of the linked project
     "project_name": None,       # Project name
@@ -46,7 +47,6 @@ PROJECT_SCHEMA = {
     "environment": "development",  # Environment: development, staging, production
     "workspace_id": None,       # UUID of the workspace this project belongs to
     "workspace_name": None,     # Workspace display name
-    "workspace_key": None,      # Base64-encoded workspace encryption key
     "last_pull": None,          # ISO timestamp of last pull
     "last_push": None,          # ISO timestamp of last push
 }
