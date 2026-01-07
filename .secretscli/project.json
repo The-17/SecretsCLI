@@ -1,10 +1,10 @@
 {
-  "project_id": "1a178be4-129a-4630-acce-ae0d80a24eeb",
-  "project_name": "test",
+  "project_id": null,
+  "project_name": null,
   "description": null,
   "environment": "development",
-  "workspace_id": "2080814a-8711-41c0-b7fc-4c42e0567bdd",
-  "workspace_name": "test workspace",
+  "workspace_id": null,
+  "workspace_name": null,
   "last_pull": null,
   "last_push": null
 }

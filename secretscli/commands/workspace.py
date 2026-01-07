@@ -168,11 +168,22 @@ def invite_member(
     email: str = typer.Argument(..., help="Email of the user to invite"),
     role: str = typer.Option("member", "--role", "-r", help="Role: owner, admin, member, read_only")
 ):
-    """Invite a user to this project's workspace."""
-    workspace_id = CredentialsManager.get_project_workspace_id()
+    """
+    Invite a user to the selected workspace.
+    
+    Uses the workspace set by 'workspace switch'. To invite to a different
+    workspace, switch to it first with 'secretscli workspace switch <name>'.
+    
+    For inviting to a specific project's workspace, use 'project invite' instead.
+    """
+    workspace_id = CredentialsManager.get_selected_workspace_id()
     if not workspace_id:
-        rich.print("[red]No project workspace set. Run 'secretscli project use <name>' first.[/red]")
+        rich.print("[red]No workspace selected. Run 'secretscli workspace switch <name>' first.[/red]")
         raise typer.Exit(1)
+    
+    # Get workspace info for display
+    workspace = CredentialsManager.get_workspace(workspace_id)
+    workspace_name = workspace.get("name", "workspace")
     
     # Get invitee's public key
     response = api_client.call(
@@ -187,10 +198,10 @@ def invite_member(
     
     invitee_public_key = base64.b64decode(response.json()["data"]["public_key"])
     
-    # Get current workspace key from project config
-    workspace_key = CredentialsManager.get_project_workspace_key()
+    # Get workspace key from global cache
+    workspace_key = CredentialsManager.get_workspace_key(workspace_id)
     if not workspace_key:
-        rich.print("[red]Workspace key not found. Please re-login or run 'project use'.[/red]")
+        rich.print("[red]Workspace key not found. Please re-login.[/red]")
         raise typer.Exit(1)
     
     # Encrypt workspace key for invitee
@@ -212,16 +223,20 @@ def invite_member(
         rich.print(f"[red]Failed to invite user: {response.text}[/red]")
         raise typer.Exit(1)
     
-    rich.print(f"[green]Invited {email} to workspace as {role}![/green]")
+    rich.print(f"[green]Invited {email} to '{workspace_name}' as {role}![/green]")
 
 
 @workspace_app.command("members")
 @require_auth
 def list_members():
-    """List members of this project's workspace."""
-    workspace_id = CredentialsManager.get_project_workspace_id()
+    """
+    List members of the selected workspace.
+    
+    Uses the workspace set by 'workspace switch'.
+    """
+    workspace_id = CredentialsManager.get_selected_workspace_id()
     if not workspace_id:
-        rich.print("[red]No project workspace set. Run 'secretscli project use <name>' first.[/red]")
+        rich.print("[red]No workspace selected. Run 'secretscli workspace switch <name>' first.[/red]")
         raise typer.Exit(1)
     
     response = api_client.call(
@@ -263,11 +278,19 @@ def list_members():
 @workspace_app.command("remove")
 @require_auth
 def remove_member(email: str = typer.Argument(..., help="Email of the user to remove")):
-    """Remove a member from this project's workspace."""
-    workspace_id = CredentialsManager.get_project_workspace_id()
+    """
+    Remove a member from the selected workspace.
+    
+    Uses the workspace set by 'workspace switch'.
+    """
+    workspace_id = CredentialsManager.get_selected_workspace_id()
     if not workspace_id:
-        rich.print("[red]No project workspace set. Run 'secretscli project use <name>' first.[/red]")
+        rich.print("[red]No workspace selected. Run 'secretscli workspace switch <name>' first.[/red]")
         raise typer.Exit(1)
+    
+    # Get workspace name for display
+    workspace = CredentialsManager.get_workspace(workspace_id)
+    workspace_name = workspace.get("name", "workspace")
     
     response = api_client.call(
         "workspaces.remove_member",
@@ -280,4 +303,4 @@ def remove_member(email: str = typer.Argument(..., help="Email of the user to re
         rich.print(f"[red]Failed to remove member: {response.text}[/red]")
         raise typer.Exit(1)
     
-    rich.print(f"[green]Removed {email} from workspace![/green]")
+    rich.print(f"[green]Removed {email} from '{workspace_name}'![/green]")
