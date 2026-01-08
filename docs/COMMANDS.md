@@ -74,16 +74,21 @@ Set the active project for the current directory. Creates `.secretscli/project.j
 secretscli project use <name>
 ```
 
+Looks for the project in your **currently selected workspace**. If not found, switch workspaces first.
+
 **Example:**
 ```bash
 cd /path/to/my-project
+secretscli workspace switch "Backend Team"  # Select workspace first
 secretscli project use my-api
 ```
+
+> **Note:** If project not found, try `workspace switch <name>` to select a different workspace.
 
 ---
 
 ### `secretscli project update`
-Update project name or description.
+Update project name or description in the currently selected workspace.
 
 ```bash
 secretscli project update <current-name> [-n new-name] [-d "new description"]
@@ -93,10 +98,12 @@ secretscli project update <current-name> [-n new-name] [-d "new description"]
 - `-n, --name` - New project name
 - `-d, --description` - New description
 
+> **Note:** Uses the *selected* workspace. Run `workspace switch` first if needed.
+
 ---
 
 ### `secretscli project delete`
-Delete a project and all its secrets.
+Delete a project and all its secrets from the currently selected workspace.
 
 ```bash
 secretscli project delete <name> [-f]
@@ -106,6 +113,8 @@ secretscli project delete <name> [-f]
 - `-f, --force` - Skip confirmation prompt
 
 ⚠️ **Warning:** This permanently deletes all secrets in the project.
+
+> **Note:** Uses the *selected* workspace. Run `workspace switch` first if needed.
 
 ---
 

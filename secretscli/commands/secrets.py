@@ -194,6 +194,10 @@ def list_secrets(
     rich.print(f"[green]Successfully listed secrets[/green]")
     secrets = response.json()["data"]["secrets"]
     
+    if len(secrets) < 1:
+        rich.print("[dim]No secrets found.[/dim]")
+        return
+    
     for secret in secrets:
         if values:
             decrypted_secret = EncryptionService.decrypt_secret(secret["value"])
