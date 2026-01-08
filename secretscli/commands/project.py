@@ -199,29 +199,44 @@ def list_projects():
 @require_auth
 def use_project(project_name: str):
     """
-    Use a project.
+    Use a project from the currently selected workspace.
     
-    Sets project config with workspace_id. Workspace key is looked up
-    from global config at runtime, not stored in project.json.
+    If the project exists in a different workspace, switch to that workspace
+    first with 'secretscli workspace switch <name>'.
     """
     
     if not project_name:
         rich.print("[red]Project name is required.[/red]")
         raise typer.Exit(1)
     
-    response = api_client.call("projects.get", "GET", project_name=project_name)
-    if response.status_code != 200:
+    # Get selected workspace
+    workspace_id = CredentialsManager.get_selected_workspace_id()
+    if not workspace_id:
+        rich.print("[red]No workspace selected. Run 'secretscli workspace switch <name>' first.[/red]")
+        raise typer.Exit(1)
+    
+    workspace = CredentialsManager.get_workspace(workspace_id)
+    workspace_name = workspace.get("name", "Unknown")
+    
+    # Get project from selected workspace
+    response = api_client.call(
+        "projects.get", 
+        "GET", 
+        workspace_id=workspace_id,
+        project_name=project_name
+    )
+    
+    if response.status_code == 404 or (response.status_code != 200 and "not found" in response.text.lower()):
+        rich.print(f"[red]Project '{project_name}' not found in hhis selected workspace ({workspace_name}).[/red]")
+        rich.print("[dim]Try 'secretscli workspace switch <name>' to select a different workspace.[/dim]")
+        raise typer.Exit(1)
+    elif response.status_code != 200:
         rich.print(f"[red]Failed to get project: {response.text}[/red]")
         raise typer.Exit(1)
     
     project = response.json()
     project_data = project.get("data", {})
     project_id = project_data.get("id")
-    
-    # Get workspace info from global cache
-    workspace_id = project_data.get("workspace_id")
-    workspace = CredentialsManager.get_workspace(workspace_id)
-    workspace_name = workspace.get("name")
     
     # Store project config (workspace_key is NOT stored here)
     CredentialsManager.config_project(
@@ -235,10 +250,7 @@ def use_project(project_name: str):
         last_push=None
     )
     
-    if workspace_name:
-        rich.print(f"[green]✅ Project '{project_name}' selected (workspace: {workspace_name})[/green]")
-    else:
-        rich.print(f"[green]✅ Project '{project_name}' selected![/green]")
+    rich.print(f"[green]Project '{project_name}' selected (workspace: {workspace_name})[/green]")
 
 
 @project_app.command("update")
@@ -269,6 +281,12 @@ def update_project(
         rich.print("[red]Please provide at least one field to update: --name or --description[/red]")
         raise typer.Exit(1)
     
+    # Get selected workspace
+    workspace_id = CredentialsManager.get_selected_workspace_id()
+    if not workspace_id:
+        rich.print("[red]No workspace selected. Run 'secretscli workspace switch <name>' first.[/red]")
+        raise typer.Exit(1)
+    
     # Build update payload (only include provided fields)
     data = {}
     if name:
@@ -280,6 +298,7 @@ def update_project(
         "projects.update", 
         "PATCH", 
         data=data, 
+        workspace_id=workspace_id,
         project_name=project_name
     )
 
@@ -287,7 +306,7 @@ def update_project(
         rich.print(f"[red]Failed to update project: {response.text}[/red]")
         raise typer.Exit(1)
     
-    rich.print(f"[green]✅ Project '{project_name}' updated![/green]")
+    rich.print(f"[green]Project '{project_name}' updated![/green]")
     
 
 
@@ -304,6 +323,12 @@ def delete_project(
         rich.print("[red]Project name is required.[/red]")
         raise typer.Exit(1)
     
+    # Get selected workspace
+    workspace_id = CredentialsManager.get_selected_workspace_id()
+    if not workspace_id:
+        rich.print("[red]No workspace selected. Run 'secretscli workspace switch <name>' first.[/red]")
+        raise typer.Exit(1)
+    
     # Confirm deletion unless --force is used
     if not force:
         confirm = questionary.confirm(
@@ -318,6 +343,7 @@ def delete_project(
     response = api_client.call(
         "projects.delete", 
         "DELETE", 
+        workspace_id=workspace_id,
         project_name=project_name
     )
 
@@ -325,7 +351,7 @@ def delete_project(
         rich.print(f"[red]Failed to delete project: {response.text}[/red]")
         raise typer.Exit(1)
     
-    rich.print(f"[green]✅ Project '{project_name}' deleted![/green]")
+    rich.print(f"[green]Project '{project_name}' deleted![/green]")
 
 
 @project_app.command("invite")
@@ -345,10 +371,15 @@ def invite_to_project(
         secretscli project invite bob@example.com --role admin
     """
     
-    # Get current project
+    # Get current project info
     project_name = CredentialsManager.get_project_name()
+    workspace_id = CredentialsManager.get_project_workspace_id()
     if not project_name:
         rich.print("[red]No project selected. Run 'secretscli project use <name>' first.[/red]")
+        raise typer.Exit(1)
+    
+    if not workspace_id:
+        rich.print("[red]No workspace found for this project. Run 'secretscli project use <name>' first.[/red]")
         raise typer.Exit(1)
     
     # Get invitee's public key
@@ -370,39 +401,59 @@ def invite_to_project(
         rich.print("[red]Public key not found. Please re-login.[/red]")
         raise typer.Exit(1)
     
-    secrets = env.read()
-    decrypted_secrets = {}
-    api_secrets = []
-
-    # decryt secrets for re-encryption with new workspace key
-    for key, value in secrets.items():
-        decrypted_value = EncryptionService.decrypt_secret(value)
-        decrypted_secrets[key] = decrypted_value
+    # Check if workspace is personal or already shared
+    workspace_info = CredentialsManager.get_workspace(workspace_id)
+    workspace_type = workspace_info.get("type", "personal")
+    is_personal = workspace_type == "personal"
     
-    # Generate NEW workspace key for the shared workspace
-    new_workspace_key = EncryptionService.generate_workspace_key()
-
-    # encrypt with new workspace key
-    for key, value in decrypted_secrets.items():
-        encrypted_value = EncryptionService.encrypt_secret(value, new_workspace_key)
-        api_secrets.append({"key":key, "value":encrypted_value})
-    
-    # Encrypt workspace key for both parties
-    encrypted_for_owner = EncryptionService.encrypt_for_user(my_public_key, new_workspace_key)
-    encrypted_for_invitee = EncryptionService.encrypt_for_user(invitee_public_key, new_workspace_key)
-    
-    # Send to API - it handles workspace creation and project migration
-    response = api_client.call(
-        "projects.invite",
-        "POST",
-        project_name=project_name,
-        data={
+    if is_personal:
+        # Personal workspace → need to create shared workspace
+        # Generate NEW workspace key and re-encrypt secrets
+        workspace_key = EncryptionService.generate_workspace_key()
+        
+        secrets = env.read()
+        api_secrets = []
+        
+        # .env values are already plaintext - encrypt with new workspace key
+        for key, value in secrets.items():
+            encrypted_value = EncryptionService.encrypt_secret(value, workspace_key)
+            api_secrets.append({"key": key, "value": encrypted_value})
+        
+        # Encrypt workspace key for both parties
+        encrypted_for_owner = EncryptionService.encrypt_for_user(my_public_key, workspace_key)
+        encrypted_for_invitee = EncryptionService.encrypt_for_user(invitee_public_key, workspace_key)
+        
+        data = {
             "email": email,
             "role": role,
             "encrypted_workspace_key_owner": base64.b64encode(encrypted_for_owner).decode(),
             "encrypted_workspace_key_invitee": base64.b64encode(encrypted_for_invitee).decode(),
             "secrets": api_secrets
         }
+    else:
+        # Already shared workspace → use existing key
+        workspace_key = CredentialsManager.get_workspace_key(workspace_id)
+        if not workspace_key:
+            rich.print("[red]Workspace key not found. Please re-login.[/red]")
+            raise typer.Exit(1)
+        
+        # Only need to encrypt for invitee (owner already has the key)
+        encrypted_for_invitee = EncryptionService.encrypt_for_user(invitee_public_key, workspace_key)
+        
+        data = {
+            "email": email,
+            "role": role,
+            "encrypted_workspace_key_invitee": base64.b64encode(encrypted_for_invitee).decode()
+            # No secrets or owner key needed - already shared
+        }
+    
+    # Send to API
+    response = api_client.call(
+        "projects.invite",
+        "POST",
+        workspace_id=workspace_id,
+        project_name=project_name,
+        data=data
     )
     
     if response.status_code not in (200, 201):
@@ -410,20 +461,35 @@ def invite_to_project(
         raise typer.Exit(1)
     
     result = response.json().get("data", {})
-    ws_name = result.get("workspace_name", "shared workspace")
+    new_workspace_id = result.get("workspace_id")
+    new_workspace_name = result.get("workspace_name", "shared workspace")
+    migrated_from_personal = result.get("migrated_from_personal", False)
     
-    # Update local workspace keys
-    workspace_id = result.get("workspace_id")
-    if workspace_id:
+    if migrated_from_personal and new_workspace_id:
+        # Migration happened - store new workspace key in global config
         workspaces = CredentialsManager.get_workspace_keys()
-        workspaces[workspace_id] = {
-            "name": ws_name,
-            "key": base64.b64encode(new_workspace_key).decode(),
+        workspaces[new_workspace_id] = {
+            "name": new_workspace_name,
+            "key": base64.b64encode(workspace_key).decode(),
             "role": "owner",
             "type": "shared"
         }
         CredentialsManager.store_workspace_keys(workspaces)
+        
+        # Update project.json with new workspace info
+        CredentialsManager.update_project_config(
+            workspace_id=new_workspace_id,
+            workspace_name=new_workspace_name
+        )
+        
+        # Switch to the new shared workspace
+        CredentialsManager.set_selected_workspace(new_workspace_id)
     
-    rich.print(f"[green]✅ Invited {email} to project![/green]")
-    rich.print(f"[dim]Created shared workspace: {ws_name}[/dim]")
+    rich.print(f"[green]Invited {email} to project![/green]")
+    
+    if migrated_from_personal:
+        rich.print(f"[dim]Created shared workspace: {new_workspace_name}[/dim]")
+        rich.print(f"[dim]Project moved to shared workspace and selected for future operations[/dim]")
+    else:
+        rich.print(f"[dim]Added {email} to workspace: {new_workspace_name}[/dim]")
 

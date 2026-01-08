@@ -106,8 +106,6 @@ def _refresh_token() -> bool:
             authenticated=False
         )
 
-        print(response.text)
-
         if response.status_code == 200:
             data = response.json()["data"]
             CredentialsManager.store_tokens(

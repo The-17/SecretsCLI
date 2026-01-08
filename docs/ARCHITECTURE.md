@@ -82,16 +82,25 @@ Password → User Key → decrypts Private Key → decrypts Workspace Key → de
 
 ### Setting a Secret
 
-1. Get workspace_key from project config
-2. Encrypt value with workspace_key (Fernet)
-3. Send to API: `{project_id, key, encrypted_value}`
-4. Write plaintext to local `.env`
+1. Get workspace_id from project config
+2. Fetch workspace_key from global config cache
+3. Encrypt value with workspace_key (Fernet)
+4. Send to API: `{project_id, key, encrypted_value}`
+5. Write plaintext to local `.env`
 
-### Inviting a Team Member
+### Inviting a Team Member (Project Invite)
 
-1. Fetch invited user's public_key from API
-2. Encrypt workspace_key with their public_key (NaCl SealedBox)
-3. Send to API: `{email, role, encrypted_workspace_key}`
+**From Personal Workspace:**
+1. Generate new workspace key
+2. Re-encrypt all secrets with new key
+3. Encrypt workspace key for owner + invitee (NaCl SealedBox)
+4. API creates shared workspace, migrates project, updates secrets
+5. CLI updates local project.json with new workspace info
+
+**From Shared Workspace:**
+1. Fetch existing workspace key from global cache
+2. Encrypt workspace key for invitee (NaCl SealedBox)
+3. API adds invitee as member
 4. When they login, they decrypt it with their private_key
 
 ---
@@ -136,6 +145,7 @@ Password → User Key → decrypts Private Key → decrypts Workspace Key → de
 3. Access workspace key if needed:
    ```python
    from ..utils.credentials import CredentialsManager
+   # workspace_key is fetched from global config via workspace_id
    workspace_key = CredentialsManager.get_project_workspace_key()
    ```
 

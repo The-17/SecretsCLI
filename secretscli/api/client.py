@@ -66,10 +66,10 @@ ENDPOINT_MAP = {
     "projects": {
         "list": "projects/",
         "create": "projects/",
-        "get": "projects/{project_name}/",
-        "update": "projects/{project_name}/",
-        "delete": "projects/{project_name}/",
-        "invite": "projects/{project_name}/invite/",
+        "get": "projects/{workspace_id}/{project_name}/",
+        "update": "projects/{workspace_id}/{project_name}/",
+        "delete": "projects/{workspace_id}/{project_name}/",
+        "invite": "projects/{workspace_id}/{project_name}/invite/",
     },
     "workspaces": {
         "list": "workspaces/",

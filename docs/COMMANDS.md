@@ -113,10 +113,17 @@ secretscli project delete <name> [-f]
 Invite a user to collaborate on the current project.
 
 ```bash
-secretscli project invite <email>
+secretscli project invite <email> [--role member]
 ```
 
-The invited user receives access to the project's workspace and all secrets.
+**Options:**
+- `-r, --role` - Role for the invitee: `admin`, `member`, `read_only` (default: `member`)
+
+**Behavior:**
+- **Personal workspace** → Creates a new shared workspace, migrates the project, re-encrypts secrets
+- **Already shared** → Adds the user to the existing workspace
+
+The invited user receives access to the project's workspace and all its secrets.
 
 ---
 
@@ -255,39 +262,48 @@ Creates a new workspace with you as owner. Invite team members with `workspace i
 ---
 
 ### `secretscli workspace invite`
-Invite a user to the current project's workspace.
+Invite a user to the currently selected workspace.
 
 ```bash
-secretscli workspace invite <email>
+secretscli workspace invite <email> [--role member]
 ```
+
+**Options:**
+- `-r, --role` - Role for the invitee: `admin`, `member`, `read_only` (default: `member`)
 
 The invited user receives an encrypted copy of the workspace key that only they can decrypt.
 
 **Requirements:**
-- Must have an active project (`project use` first)
+- Must have a workspace selected (`workspace switch` first)
 - User must have a SecretsCLI account
+
+> **Note:** Uses the *selected* workspace, not the project workspace. Use `project invite` to invite to a project's workspace.
 
 ---
 
 ### `secretscli workspace members`
-List all members of the current project's workspace.
+List all members of the currently selected workspace.
 
 ```bash
 secretscli workspace members
 ```
 
-Shows member email, role (owner/member), and join date.
+Shows member email, role (owner/admin/member), and status.
+
+> **Note:** Uses the *selected* workspace. Use `workspace switch` to change which workspace to view.
 
 ---
 
 ### `secretscli workspace remove`
-Remove a member from the current project's workspace.
+Remove a member from the currently selected workspace.
 
 ```bash
 secretscli workspace remove <email>
 ```
 
 Revokes their access to all secrets in the workspace.
+
+> **Note:** Uses the *selected* workspace. Use `workspace switch` first to select which workspace to modify.
 
 ---
 
