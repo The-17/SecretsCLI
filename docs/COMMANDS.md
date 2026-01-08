@@ -26,6 +26,26 @@ secretscli login
 
 Prompts for email and password. Retrieves your encryption keys and workspace access.
 
+---
+
+### `secretscli logout`
+Logout from SecretsCLI.
+
+```bash
+secretscli logout [-f]
+```
+
+**Options:**
+- `-f, --force` - Skip confirmation prompt
+
+**What it clears:**
+- Access/refresh tokens
+- Private key from keychain
+- Workspace cache
+
+> **Note:** Your `project.json` is preserved - you can `login` again without re-selecting your project.
+
+---
 
 ### `secretscli guide`
 Interactive quick-start guide for users.

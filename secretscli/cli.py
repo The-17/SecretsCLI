@@ -148,7 +148,55 @@ def login():
     if not _perform_login_(credentials):
         raise typer.Exit(1)
     
-    rich.print("[green]✅ Logged in successfully![/green]")
+    rich.print("[green]Logged in successfully![/green]")
+
+
+@app.command()
+def logout(
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation prompt")
+):
+    """
+    Logout from SecretsCLI.
+    
+    Clears all stored credentials:
+    - Access/refresh tokens
+    - Private key from keychain
+    - Workspace cache
+    
+    Does NOT delete project.json (your project binding is preserved).
+    """
+    from .utils.credentials import CredentialsManager
+    from .api.client import api_client
+    
+    # Check if logged in
+    if not CredentialsManager.is_authenticated():
+        rich.print("[yellow]You're not logged in.[/yellow]")
+        raise typer.Exit(0)
+    
+    email = CredentialsManager.get_email()
+    
+    # Confirm unless --force
+    if not force:
+        confirm = questionary.confirm(
+            f"Logout from {email}?",
+            default=True,
+            style=custom_style
+        ).ask()
+        if not confirm:
+            rich.print("[yellow]Cancelled.[/yellow]")
+            raise typer.Exit(0)
+    
+    # Try to invalidate token on server
+    try:
+        api_client.call("auth.logout", "POST")
+    except Exception:
+        pass  # Ignore - we'll clear local credentials anyway
+    
+    # Clear local session
+    CredentialsManager.clear_session()
+    
+    rich.print(f"[green]Logged out successfully.[/green]")
+    rich.print("[dim]Run 'secretscli login' to login again.[/dim]")
 
 
 

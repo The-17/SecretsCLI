@@ -1,10 +1,10 @@
 {
-  "project_id": "258531e5-6ef2-461a-9101-3f4155c3018e",
-  "project_name": "neonz",
+  "project_id": null,
+  "project_name": null,
   "description": null,
   "environment": "development",
-  "workspace_id": "59787237-8e37-4847-95ff-b478d17a7434",
-  "workspace_name": "Test Workspace",
+  "workspace_id": null,
+  "workspace_name": null,
   "last_pull": null,
   "last_push": null
 }
