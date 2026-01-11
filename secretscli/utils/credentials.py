@@ -24,55 +24,34 @@ Usage:
 """
 
 import json
+import os
 import sys, base64
 from pathlib import Path
-
 import keyring
 from keyring.errors import PasswordDeleteError
-
 from ..config import global_config_file, token_file, CONFIG_SCHEMA, TOKEN_SCHEMA, global_config_dir
 
 
 KEYRING_SERVICE = "SecretsCLI"
 
-
+# Auto-detect headless/CLI environment and use plaintext backend
+# This prevents password prompts on WSL, SSH sessions, and servers
 def _configure_keyring():
-    """
-    Configure keyring backend based on platform.
-    
-    Uses the best available backend:
-    - macOS: macOS Keychain (default)
-    - Windows: Windows Credential Manager (default)  
-    - Linux: Secret Service if available, otherwise PlaintextKeyring
-    """
-    # First, try to use the default backend
-    try:
-        # Test if the default backend works
-        keyring.get_keyring()
-        test_result = keyring.get_password("__secretscli_test__", "__test__")
-        # If we get here without exception, the default backend works
+    """Configure keyring backend for the current environment."""
+    # macOS and Windows have proper keychain support - use defaults
+    if sys.platform == "darwin" or sys.platform == "win32":
         return
-    except Exception:
-        pass
     
-    # Fallback: use keyrings.alt PlaintextKeyring
-    # This works everywhere but stores passwords in plaintext
-    # We mitigate this by storing in our own protected config directory
+    # On Linux (including WSL), always use PlaintextKeyring to avoid
+    # password prompts. The default backends (Secret Service, encrypted file)
+    # require either a GUI or manual password entry on every command.
     try:
         from keyrings.alt.file import PlaintextKeyring
-        
-        # Configure PlaintextKeyring to use our config directory
-        kr = PlaintextKeyring()
-        kr.file_path = str(global_config_dir / "keyring.cfg")
-        keyring.set_keyring(kr)
+        keyring.set_keyring(PlaintextKeyring())
     except ImportError:
-        # keyrings.alt not installed - user needs to install it
-        pass
+        pass  # keyrings.alt not installed, use default
 
-
-# Configure keyring on module import
 _configure_keyring()
-
 
 class CredentialsManager:
     """

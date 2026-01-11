@@ -1,6 +1,6 @@
 [project]
 name = "secretscli-py"
-version = "0.1.2"
+version = "0.1.5"
 description = "SecretsCLI is a lightweight command-line interface tool for securely managing and retrieving your secrets across devices. With an intuitive login system, it ensures your sensitive information such as API keys, passwords, and other private data remains protected while being easily accessible from any environment. Designed for simplicity and security, SecretsCLI allows seamless integration with your development workflow."
 authors = [
     {name = "The Seventeen", email = "hello@theseventeen.co"}
