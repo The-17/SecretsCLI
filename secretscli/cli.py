@@ -211,16 +211,16 @@ def guide():
     
     # Header
     console.print()
-    console.print("[bold cyan]📚 SecretsCLI Quick Start Guide[/bold cyan]")
+    console.print("[bold cyan]SecretsCLI Quick Start Guide[/bold cyan]")
     console.print()
     
     # Ask what kind of user they are
     user_type = questionary.select(
         "What describes you best?",
         choices=[
-            "🆕 First time setup (new account)",
-            "🔄 Returning user (new machine)",
-            "📋 Show all commands"
+            "First time setup (new account)",
+            "Returning user (new machine)",
+            "Show all commands"
         ],
         style=custom_style
     ).ask()
@@ -230,69 +230,69 @@ def guide():
     
     if "First time" in user_type:
         first_time_guide = """
-[bold yellow]Step 1:[/bold yellow] Create your account
-  [dim]$[/dim] [green]secretscli init[/green]
+            [bold yellow]Step 1:[/bold yellow] Create your account
+            [dim]$[/dim] [green]secretscli init[/green]
 
-[bold yellow]Step 2:[/bold yellow] Create your first project
-  [dim]$[/dim] [green]secretscli project create my-app[/green]
+            [bold yellow]Step 2:[/bold yellow] Create your first project
+            [dim]$[/dim] [green]secretscli project create my-app[/green]
 
-[bold yellow]Step 3:[/bold yellow] Add your secrets (choose one method)
+            [bold yellow]Step 3:[/bold yellow] Add your secrets (choose one method)
 
-  [dim]Option A - Add individually:[/dim]
-  [dim]$[/dim] [green]secretscli set DATABASE_URL=postgresql://...[/green]
-  [dim]$[/dim] [green]secretscli set API_KEY=sk_live_...[/green]
+            [dim]Option A - Add individually:[/dim]
+            [dim]$[/dim] [green]secretscli set DATABASE_URL=postgresql://...[/green]
+            [dim]$[/dim] [green]secretscli set API_KEY=sk_live_...[/green]
 
-  [dim]Option B - Push existing .env file:[/dim]
-  [dim]$[/dim] [green]secretscli push[/green]
+            [dim]Option B - Push existing .env file:[/dim]
+            [dim]$[/dim] [green]secretscli push[/green]
 
-[bold yellow]Step 4:[/bold yellow] Pull secrets anytime
-  [dim]$[/dim] [green]secretscli pull[/green]
+            [bold yellow]Step 4:[/bold yellow] Pull secrets anytime
+            [dim]$[/dim] [green]secretscli pull[/green]
 
-[bold green]✨ That's it! Your secrets are now encrypted and accessible from anywhere.[/bold green]
-"""
+            [bold green]✨ That's it! Your secrets are now encrypted and accessible from anywhere.[/bold green]
+        """
         console.print(Panel(first_time_guide, title="[bold]🆕 First Time Setup[/bold]", border_style="cyan"))
     
     elif "Returning" in user_type:
         returning_guide = """
-[bold yellow]Step 1:[/bold yellow] Install SecretsCLI
-  [dim]$[/dim] [green]pip install secretscli-py[/green]
+            [bold yellow]Step 1:[/bold yellow] Install SecretsCLI
+            [dim]$[/dim] [green]pip install secretscli-py[/green]
 
-[bold yellow]Step 2:[/bold yellow] Login to your account
-  [dim]$[/dim] [green]secretscli login[/green]
+            [bold yellow]Step 2:[/bold yellow] Login to your account
+            [dim]$[/dim] [green]secretscli login[/green]
 
-[bold yellow]Step 3:[/bold yellow] Connect to your project
-  [dim]$[/dim] [green]secretscli project use my-app[/green]
+            [bold yellow]Step 3:[/bold yellow] Connect to your project
+            [dim]$[/dim] [green]secretscli project use my-app[/green]
 
-[bold yellow]Step 4:[/bold yellow] Pull your secrets
-  [dim]$[/dim] [green]secretscli pull[/green]
+            [bold yellow]Step 4:[/bold yellow] Pull your secrets
+            [dim]$[/dim] [green]secretscli pull[/green]
 
-[bold green]✨ Done! Your .env file is ready.[/bold green]
-"""
-        console.print(Panel(returning_guide, title="[bold]🔄 Returning User Setup[/bold]", border_style="cyan"))
+            [bold green]Done! Your .env file is ready.[/bold green]
+        """
+        console.print(Panel(returning_guide, title="[bold]Returning User Setup[/bold]", border_style="cyan"))
     
     else:
         commands_guide = """
-[bold underline]Account Commands[/bold underline]
-  [green]secretscli init[/green]      Create account or login
-  [green]secretscli login[/green]     Login to existing account
-  [green]secretscli logout[/green]    Logout from current session
-  [green]secretscli status[/green]    Show current login status
+        [bold underline]Account Commands[/bold underline]
+        [green]secretscli init[/green]      Create account or login
+        [green]secretscli login[/green]     Login to existing account
+        [green]secretscli logout[/green]    Logout from current session
 
-[bold underline]Project Commands[/bold underline]
-  [green]secretscli project create <name>[/green]   Create a new project
-  [green]secretscli project list[/green]            List all projects
-  [green]secretscli project use <name>[/green]      Set active project
-  [green]secretscli project delete <name>[/green]   Delete a project
+        [bold underline]Project Commands[/bold underline]
+        [green]secretscli project create <name>[/green]   Create a new project
+        [green]secretscli project list[/green]            List all projects
+        [green]secretscli project use <name>[/green]      Set active project
+        [green]secretscli project delete <name>[/green]   Delete a project
 
-[bold underline]Secret Commands[/bold underline]
-  [green]secretscli set <KEY>=<value>[/green]   Add or update a secret
-  [green]secretscli get <KEY>[/green]           Get a secret value
-  [green]secretscli list[/green]                List all secret keys
-  [green]secretscli delete <KEY>[/green]        Delete a secret
-  [green]secretscli pull[/green]                Download secrets to .env
-  [green]secretscli push[/green]                Upload .env to cloud
-"""
-        console.print(Panel(commands_guide, title="[bold]📋 All Commands[/bold]", border_style="cyan"))
+        [bold underline]Secret Commands[/bold underline]
+        [green]secretscli set <KEY>=<value>[/green]   Add or update a secret
+        [green]secretscli get <KEY>[/green]           Get a secret value
+        [green]secretscli list[/green]                List all secret keys
+        [green]secretscli delete <KEY>[/green]        Delete a secret
+        [green]secretscli pull[/green]                Download secrets to .env
+        [green]secretscli push[/green]                Upload .env to cloud
+        [green]secretscli diff[/green]                Compare local vs cloud secrets
+        """
+        console.print(Panel(commands_guide, title="[bold]All Commands[/bold]", border_style="cyan"))
 
 
 

@@ -238,7 +238,23 @@ Upload all secrets from `.env` to the cloud.
 secretscli secrets push
 ```
 
-Reads local `.env` file, encrypts each secret, and uploads to server.
+Reads local `.env` file, encrypts each secret, and uploads to server. Also updates `.env.example` with the current keys.
+
+---
+
+### `secretscli secrets diff`
+Compare local `.env` secrets with cloud secrets.
+
+```bash
+secretscli secrets diff
+```
+
+Shows:
+- Keys only in local (will be added on push)
+- Keys only in cloud (missing locally)
+- Keys with different values
+
+Use this to check for discrepancies before pushing or pulling.
 
 ---
 

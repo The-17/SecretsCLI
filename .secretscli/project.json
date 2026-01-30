@@ -1,10 +1,10 @@
 {
-  "project_id": "b868f355-3afe-45b2-ba2f-6bbe25b214c1",
-  "project_name": "Kairos",
+  "project_id": "089dbc2f-72b7-4046-bbe1-2f7ac78e8969",
+  "project_name": "secretscli",
   "description": null,
   "environment": "development",
-  "workspace_id": "6b7d6b8a-0064-4b5d-ba84-50aec1427b51",
-  "workspace_name": "Big's Workspace",
+  "workspace_id": "a7918e7d-d9f8-4331-b027-1649464adbe2",
+  "workspace_name": "Test's Workspace",
   "last_pull": null,
-  "last_push": null
+  "last_push": "2026-01-30T10:11:38.125474+00:00"
 }

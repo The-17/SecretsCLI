@@ -65,6 +65,7 @@ from ..utils.credentials import CredentialsManager
 from ..utils.decorators import require_auth
 from ..encryption import EncryptionService
 from ..utils.env_manager import env
+from ..utils.diff import fetch_cloud_secrets, compare_secrets, show_diff
 
 
 secrets_app = typer.Typer(name="secrets", help="Manage your secrets. Run 'secretscli secrets --help' for subcommands.")
@@ -113,7 +114,7 @@ def set_secret(
         encrypted_value = EncryptionService.encrypt_secret(value)
         api_secrets.append({"key": key, "value": encrypted_value})
         
-        rich.print(f"[green]✅ Set {key}[/green]")
+        rich.print(f"[green]Set {key}[/green]")
     
     # Write plain text to .env (for local development)
     env.write(local_secrets)
@@ -242,13 +243,29 @@ def pull_secrets():
 
 @secrets_app.command("push")
 @require_auth
-def push_secrets():
+def push_secrets(
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Skip showing diff before push")
+):
     """
     Upload secrets from .env file to API.
+    
+    By default, shows a diff of local vs cloud secrets before pushing.
+    Use --quiet to skip the diff display.
     """
     secrets = env.read()
+    
+    if not secrets:
+        rich.print("[yellow]No secrets found in .env file.[/yellow]")
+        raise typer.Exit(0)
+    
+    # Show diff unless --quiet
+    if not quiet:
+        cloud_secrets = fetch_cloud_secrets()
+        diff_result = compare_secrets(secrets, cloud_secrets)
+        show_diff(diff_result)
+    
+    # Build encrypted secrets for API
     api_secrets = []
-
     for key, value in secrets.items():
         encrypted_secret = EncryptionService.encrypt_secret(value)
         api_secrets.append({"key": key, "value": encrypted_secret})
@@ -271,11 +288,43 @@ def push_secrets():
         rich.print(f"[red]Failed to push secrets: {response.text}[/red]")
         raise typer.Exit(1)
     
+    # Sync .env.example with current .env keys
+    env.write({})
+    
     # Update last_push timestamp
     CredentialsManager.update_project_config(last_push=datetime.now(timezone.utc).isoformat())
 
-    rich.print(f"[green]Successfully pushed .env secrets[/green]")
+    rich.print(f"[green]Successfully pushed {len(secrets)} secret(s)[/green]")
     
+
+@secrets_app.command("diff")
+@require_auth
+def diff_secrets():
+    """
+    Compare local .env secrets with cloud secrets.
+    
+    Shows:
+    - Keys only in local (will be added on push)
+    - Keys only in cloud (missing locally)  
+    - Keys with different values between local and cloud
+    """
+    local_secrets = env.read()
+    
+    if not local_secrets:
+        rich.print("[yellow]No secrets found in .env file.[/yellow]")
+        raise typer.Exit(0)
+    
+    cloud_secrets = fetch_cloud_secrets()
+    
+    if not cloud_secrets:
+        rich.print("[dim]No secrets found in cloud. All local secrets are new.[/dim]")
+        for key in sorted(local_secrets.keys()):
+            rich.print(f"[cyan]➕ {key}[/cyan]")
+        return
+    
+    diff_result = compare_secrets(local_secrets, cloud_secrets)
+    show_diff(diff_result)
+
 
 @secrets_app.command("delete")
 @require_auth

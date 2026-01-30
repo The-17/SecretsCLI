@@ -227,7 +227,7 @@ def use_project(project_name: str):
     )
     
     if response.status_code == 404 or (response.status_code != 200 and "not found" in response.text.lower()):
-        rich.print(f"[red]Project '{project_name}' not found in hhis selected workspace ({workspace_name}).[/red]")
+        rich.print(f"[red]Project '{project_name}' not found in this selected workspace ({workspace_name}).[/red]")
         rich.print("[dim]Try 'secretscli workspace switch <name>' to select a different workspace.[/dim]")
         raise typer.Exit(1)
     elif response.status_code != 200:

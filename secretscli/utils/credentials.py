@@ -25,7 +25,8 @@ Usage:
 
 import json
 import os
-import sys, base64
+import base64
+import sys
 from pathlib import Path
 import keyring
 from keyring.errors import PasswordDeleteError
