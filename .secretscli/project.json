@@ -1,10 +1,10 @@
 {
-  "project_id": "089dbc2f-72b7-4046-bbe1-2f7ac78e8969",
-  "project_name": "secretscli",
+  "project_id": "b9605b91-a665-4a1d-a30f-9ea6c65d8bc7",
+  "project_name": "SecretsCLI",
   "description": null,
   "environment": "development",
-  "workspace_id": "a7918e7d-d9f8-4331-b027-1649464adbe2",
-  "workspace_name": "Test's Workspace",
+  "workspace_id": "3e16019d-6392-4169-ba1a-1bb740acd92b",
+  "workspace_name": "Sandbox",
   "last_pull": null,
-  "last_push": "2026-01-30T10:11:38.125474+00:00"
+  "last_push": "2026-02-16T23:00:36.892079+00:00"
 }

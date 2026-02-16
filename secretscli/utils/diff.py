@@ -91,17 +91,17 @@ def show_diff(diff_result: dict) -> None:
     rich.print() 
     
     if diff_result["only_local"]:
-        rich.print("[cyan]➕ New (local only - will be added to cloud):[/cyan]")
+        rich.print("[cyan]➕ New (local only - will be added to cloud. run `secretscli secrets push`):[/cyan]")
         for key in sorted(diff_result["only_local"]):
             rich.print(f"   {key}")
     
     if diff_result["only_cloud"]:
-        rich.print("[yellow]⚠️  Missing locally (only in cloud):[/yellow]")
+        rich.print("[yellow]Missing locally (only in cloud. run `secretscli secrets pull`):[/yellow]")
         for key in sorted(diff_result["only_cloud"]):
             rich.print(f"   {key}")
     
     if diff_result["different_values"]:
-        rich.print("[magenta]Modified (different values):[/magenta]")
+        rich.print("[magenta]Modified (different values. run `secretscli secrets push`):[/magenta]")
         for key in sorted(diff_result["different_values"]):
             rich.print(f"   {key}")
     

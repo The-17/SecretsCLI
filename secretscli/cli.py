@@ -31,9 +31,12 @@ COMMANDS DEFINED HERE:
 ---------------------
 - init: Initialize SecretsCLI (create account or login)
 - login: Login to existing account
+- logout: Logout from SecretsCLI
+- status
 - guide: Show interactive quick-start guide
 """
 
+from secretscli.utils.env_manager import env
 import typer
 import rich
 import questionary
@@ -43,10 +46,13 @@ from rich.console import Console
 from rich.panel import Panel
 
 from .config import initialize_global_config, initialize_project_config
+from .utils.credentials import CredentialsManager
 from .prompts import Form, custom_style
 from .auth import Auth, _perform_login_
 from .encryption import EncryptionService
 from .commands import project_app, secrets_app, workspace_app
+from .utils.diff import fetch_cloud_secrets, compare_secrets
+
 
 
 app = typer.Typer(name="SecretsCLI", help="SecretsCLI — secure secrets from any device.", add_completion=True, rich_markup_mode="rich")
@@ -199,6 +205,49 @@ def logout(
     rich.print("[dim]Run 'secretscli login' to login again.[/dim]")
 
 
+@app.command()
+def status():
+    from .utils.utils import get_relative_time
+    
+    email = CredentialsManager.get_email()
+    workspace_data = CredentialsManager.get_selected_workspace()
+    workspace_name = workspace_data.get("name")
+    workspace_type = workspace_data.get("type", "team") 
+    workspace_display = f"{workspace_name} ({'shared' if workspace_type == 'team' else 'personal'})"
+    
+    project = CredentialsManager.get_project_name()
+    project_workspace = CredentialsManager.get_project_config().get("workspace_name")
+    project_display = f"{project} (in {project_workspace})" if project_workspace else project
+    
+    # Calculate synced status
+    local_secrets = env.read()
+    cloud_secrets = fetch_cloud_secrets()
+    diff = compare_secrets(local_secrets, cloud_secrets)
+    
+    # Synced = Local secrets that match cloud secrets exactly
+    # (Total local) - (Local only) - (Modified values)
+    total_local = len(local_secrets)
+    unsynced_count = len(diff["only_local"]) + len(diff["different_values"])
+    synced_count = total_local - unsynced_count
+    
+    raw_push = CredentialsManager.get_project_config().get("last_push")
+    last_push = get_relative_time(raw_push) if raw_push else "Never"
+    
+    raw_pull = CredentialsManager.get_project_config().get("last_pull")
+    last_pull = get_relative_time(raw_pull) if raw_pull else "Never"
+
+    rich.print(" ")
+    rich.print(f"Logged in as: [bold green]{email}[/bold green]")
+    rich.print(f"Selected Workspace: [bold blue]{workspace_display}[/bold blue]")
+    rich.print(f"Current Project: [bold blue]{project_display}[/bold blue]")
+    
+    if unsynced_count > 0:
+        rich.print(f"Secrets: [green]{synced_count} synced[/green] ([yellow]{unsynced_count} unsynced[/yellow])")
+    else:
+        rich.print(f"Secrets: [green]{synced_count} synced[/green]")
+        
+    rich.print(f"Last Push: {last_push} | Last Pull: {last_pull}")
+    rich.print(" ")
 
 @app.command()
 def guide():
@@ -276,6 +325,7 @@ def guide():
         [green]secretscli init[/green]      Create account or login
         [green]secretscli login[/green]     Login to existing account
         [green]secretscli logout[/green]    Logout from current session
+        [green]secretscli status[/green]    Show current status
 
         [bold underline]Project Commands[/bold underline]
         [green]secretscli project create <name>[/green]   Create a new project

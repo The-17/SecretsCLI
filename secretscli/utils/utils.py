@@ -37,3 +37,40 @@ def _create_json_file_(file_path: Path, data: json, secure: bool) -> bool:
     except OSError as e:
         print(f"Error: Failed to create {file_path}: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+def get_relative_time(timestamp_str: str) -> str:
+    """
+    Convert an ISO timestamp string to a human-readable relative time.
+    e.g. "2023-01-01T12:00:00" -> "2 hours ago"
+    """
+    from datetime import datetime, timezone
+    
+    try:
+        dt = datetime.fromisoformat(timestamp_str)
+        now = datetime.now(timezone.utc)
+        
+        # Ensure dt is timezone-aware
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+            
+        diff = now - dt
+        seconds = diff.total_seconds()
+        
+        if seconds < 60:
+            return "just now"
+        elif seconds < 3600:
+            minutes = int(seconds // 60)
+            return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+        elif seconds < 86400:
+            hours = int(seconds // 3600)
+            return f"{hours} hour{'s' if hours != 1 else ''} ago"
+        elif seconds < 604800: # 7 days
+            days = int(seconds // 86400)
+            return f"{days} day{'s' if days != 1 else ''} ago"
+        else:
+            # For older dates, return formatted date
+            return dt.strftime("%b %d, %Y")
+            
+    except Exception:
+        return timestamp_str

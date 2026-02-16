@@ -382,9 +382,7 @@ class CredentialsManager:
         encoded = keyring.get_password(KEYRING_SERVICE, f"{email}_public_key")
         return base64.b64decode(encoded) if encoded else None
 
-    # ========================
     # GLOBAL WORKSPACE CACHE (for fast workspace switching)
-    # ========================
 
     @staticmethod
     def store_workspace_keys(workspaces: dict) -> bool:
@@ -419,6 +417,12 @@ class CredentialsManager:
         """Get workspace info from global cache. Returns empty dict if not found."""
         workspaces = CredentialsManager.get_workspace_keys()
         return workspaces.get(workspace_id, {})
+
+    @staticmethod
+    def get_selected_workspace() -> dict:
+        """Get the selected workspace"""
+        workspace_id = CredentialsManager.get_selected_workspace_id()
+        return CredentialsManager.get_workspace(workspace_id)
 
     @staticmethod
     def get_selected_workspace_id() -> str | None:

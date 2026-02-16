@@ -71,8 +71,14 @@ Password → User Key → decrypts Private Key → decrypts Workspace Key → de
 ## Running Tests
 
 ```bash
-# All tests
+# All tests (unit + integration)
 poetry run pytest tests/ -v
+
+# Unit tests only (mocked, fast)
+poetry run pytest tests/ --ignore=tests/test_integration/ -v
+
+# Integration tests only (real API, requires network)
+poetry run pytest tests/test_integration/ -v
 
 # With coverage
 poetry run pytest tests/ --cov=secretscli --cov-report=html
@@ -92,17 +98,32 @@ tests/
 ├── test_encryption.py       # Encryption unit tests
 ├── test_credentials.py      # Credentials manager tests
 ├── test_auth.py             # Login/signup tests
-└── test_commands/
-    ├── test_project.py      # Project command tests
-    ├── test_secrets.py      # Secrets command tests
-    └── test_workspace.py    # Workspace command tests
+├── test_commands/
+│   ├── test_project.py      # Project command tests
+│   ├── test_secrets.py      # Secrets command tests
+│   └── test_workspace.py    # Workspace command tests
+└── test_integration/        # Real API tests (no mocks)
+    ├── conftest.py          # Integration fixtures & test account
+    ├── test_01_auth.py      # Signup, login, token storage
+    ├── test_02_project.py   # Create, list, use, delete projects
+    ├── test_03_secrets.py   # Set, get, push, pull, diff secrets
+    └── test_04_workspace.py # Workspace operations
 ```
 
-### Mocking Strategy
+### Unit Tests (Mocked)
 
 - **Keyring** - Mocked with in-memory dict (for CI/CD)
 - **API Client** - Mocked responses, no network calls
 - **File System** - Temp directories for config files
+
+### Integration Tests (Real API)
+
+- Creates a fresh test account each run
+- Hits the real API with no mocks
+- Tests full end-to-end flows
+- Cleans up test projects after completion
+
+> **Note:** Integration tests require network access and take longer (~1-5 minutes).
 
 ---
 

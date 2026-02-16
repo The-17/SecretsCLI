@@ -47,6 +47,22 @@ secretscli logout [-f]
 
 ---
 
+### `secretscli status`
+Show current authentication and project status.
+
+```bash
+secretscli status
+```
+
+Displays:
+- Logged in user
+- Selected workspace
+- Current project
+- Number of synced/unsynced secrets
+- Last push/pull timestamps (e.g., "2 hours ago")
+
+---
+
 ### `secretscli guide`
 Interactive quick-start guide for users.
 
